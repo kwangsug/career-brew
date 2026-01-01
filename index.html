@@ -3,95 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>커리어 브루: 듀얼 마스터</title>
+    <title>커리어 브루: 듀얼 마스터 (밸런스 수정판)</title>
     <style>
-        /* 기본 설정 및 폰트 */
-        body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; background: #f4e4bc; color: #333; margin: 0; padding: 20px; user-select: none; -webkit-user-select: none; box-sizing: border-box; }
+        /* 기본 설정 */
+        body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; background: #f4e4bc; color: #333; margin: 0; padding: 20px; user-select: none; -webkit-user-select: none; box-sizing: border-box; touch-action: manipulation; }
         * { box-sizing: border-box; }
 
-        /* 메인 컨테이너 */
         #game-container { max-width: 450px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
         
-        /* 캔버스 (로스팅 영역) */
-        canvas { border-radius: 15px; background: #d2b48c; cursor: pointer; width: 100%; touch-action: none; display: block; margin-bottom: 15px; }
+        canvas { border-radius: 15px; background: #d2b48c; cursor: pointer; width: 100%; touch-action: none; display: block; margin-bottom: 15px; -webkit-tap-highlight-color: transparent; }
         
-        /* 상단 정보창 (UI) */
         #ui { margin-bottom: 15px; padding: 15px; background: #faf3e0; border-radius: 15px; border: 1px solid #f0e0c0; }
-        
-        /* 스탯 라인 */
         .stat-line { display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; align-items: center; margin-bottom: 8px; color: #3e2723; }
-        .main-beans { font-size: 32px; color: #8b4513; margin: 15px 0; font-weight: 900; word-break: keep-all; letter-spacing: -1px; }
+        .main-beans { font-size: 28px; color: #8b4513; margin: 15px 0; font-weight: 900; word-break: keep-all; letter-spacing: -0.5px; line-height: 1.2; }
         
-        /* 배지 스타일 */
-        .badge { padding: 6px 12px; border-radius: 15px; min-width: 80px; display: inline-block; text-align: center; border: 2px solid transparent; font-weight: 800; font-size: 14px; }
+        .badge { padding: 6px 10px; border-radius: 15px; min-width: 70px; display: inline-block; text-align: center; border: 2px solid transparent; font-weight: 800; font-size: 13px; }
         .badge-click { background: #ffe0b2; color: #e65100; border-color: #ffb74d; }
         .badge-bps { background: #e0f2f1; color: #00695c; border-color: #4db6ac; }
 
-        /* 상점 헤더 */
         .store-header { text-align: left; margin: 25px 0 10px 0; font-size: 18px; font-weight: 800; color: #3e2723; border-bottom: 3px solid #eee; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 
-        /* 업그레이드 리스트 영역 (스크롤) */
         #upgrades { display: flex; flex-direction: column; gap: 10px; height: 380px; overflow-y: auto; padding-right: 5px; padding-bottom: 20px; }
         #upgrades::-webkit-scrollbar { width: 6px; }
         #upgrades::-webkit-scrollbar-thumb { background: #8d6e63; border-radius: 10px; }
         #upgrades::-webkit-scrollbar-track { background: #efebe9; }
 
-        /* 버튼 스타일 (수정됨: 높이 제한 해제) */
         button { 
-            background: #fff; 
-            border: 2px solid #eee; 
-            padding: 12px 15px 12px 20px; /* 왼쪽 패딩을 늘려서 텍스트 겹침 방지 */
-            cursor: pointer; 
-            border-radius: 12px; 
-            display: flex; 
-            justify-content: space-between; 
-            transition: 0.1s; 
-            align-items: center; 
-            text-align: left; 
-            position: relative; 
-            overflow: visible; /* 짤림 방지 */
-            min-height: 80px; /* 고정 높이 대신 최소 높이 사용 */
-            height: auto; 
-            box-shadow: 0 2px 0 #e0e0e0;
-            width: 100%;
+            background: #fff; border: 2px solid #eee; padding: 12px 15px 12px 20px; 
+            cursor: pointer; border-radius: 12px; display: flex; justify-content: space-between; 
+            transition: 0.1s; align-items: center; text-align: left; position: relative; overflow: visible; 
+            min-height: 80px; height: auto; box-shadow: 0 2px 0 #e0e0e0; width: 100%;
         }
         button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 0 #ccc; }
         button:active:not(:disabled) { transform: translateY(0); box-shadow: 0 0 0; }
         button:disabled { background: #f9f9f9; color: #bbb; cursor: not-allowed; opacity: 0.7; border-color: #f0f0f0; box-shadow: none; }
         
-        /* 버튼 왼쪽 컬러 바 */
         .btn-click { border-left: 8px solid #ff9800; }
         .btn-bps { border-left: 8px solid #009688; }
 
-        /* 아이템 정보 텍스트 */
         .item-info { display: flex; flex-direction: column; gap: 4px; z-index: 2; flex: 1; }
         .item-name { font-weight: 900; font-size: 16px; color: #222; letter-spacing: -0.5px; line-height: 1.2; }
+        .item-cost { font-size: 12px; color: #5d4037; font-weight: 700; background: rgba(139, 69, 19, 0.08); padding: 2px 6px; border-radius: 4px; display: inline-block; width: fit-content; margin-top: 2px; }
         
-        .item-cost { 
-            font-size: 13px; 
-            color: #5d4037; 
-            font-weight: 700; 
-            background: rgba(139, 69, 19, 0.08); 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            display: inline-block; 
-            width: fit-content; 
-            margin-top: 2px;
-        }
-        
-        /* 우측 효과 텍스트 */
-        .item-right { text-align: right; min-width: 90px; }
-        .item-effect { font-weight: 900; font-size: 15px; z-index: 2; text-shadow: 1px 1px 0 #fff; line-height: 1.2; }
+        .item-right { text-align: right; min-width: 100px; display: flex; flex-direction: column; align-items: flex-end;}
+        .item-effect { font-weight: 900; font-size: 14px; z-index: 2; text-shadow: 1px 1px 0 #fff; line-height: 1.2; word-break: break-all;}
         .item-lvl { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 3px; }
         
-        /* 랭킹 정보 */
         .rank-info { font-size: 14px; color: #4e342e; margin-top: 15px; padding: 15px; border-top: 2px dashed #bbb; cursor: pointer; background: #efebe9; border-radius: 10px; font-weight: bold; }
         
-        /* 모달 창 */
         #ranking-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center; }
         .modal-content { background:white; width:90%; max-width:380px; padding:25px; border-radius:20px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .rank-item { display: flex; justify-content: space-between; padding: 12px 15px; margin: 6px 0; border-radius: 8px; font-size: 15px; background: #f5f5f5; }
-        .rank-me { background: #fff3e0; font-weight: 900; border: 2px solid #ffcc80; color: #e65100; }
     </style>
 </head>
 <body>
@@ -150,54 +111,55 @@
         levels: ['알바생', '주임', '대리', '과장', '차장', '부장', '이사', 'CEO', '커피 재벌', '원두 장관', '지구 대통령', '태양계 관리자', '은하계 지배자', '우주의 주인', '커피의 신']
     };
 
+    // 밸런스 패치: 아이템 간 가격 격차(Price Gap)를 대폭 증가
     const items = [
-        // Lv 1
-        { name: '🧤 고무 장갑', type: 'click', basePrice: 20, val: 1, owned: 0 },
-        { name: '☕ 모카포트', type: 'bps', basePrice: 50, val: 1, owned: 0 },
+        // [초반] 노동의 시작
+        { name: '🧤 고무 장갑', type: 'click', basePrice: 30, val: 1, owned: 0 },
+        { name: '☕ 모카포트', type: 'bps', basePrice: 1000, val: 5, owned: 0 }, // 첫 자동화 허들 상승
         
-        // Lv 2
-        { name: '🔨 원두 망치', type: 'click', basePrice: 300, val: 8, owned: 0 },
-        { name: '🔌 가정용 머신', type: 'bps', basePrice: 500, val: 15, owned: 0 },
+        // [중반] 장비 업글 (여기서부터 격차 발생)
+        { name: '🔨 원두 망치', type: 'click', basePrice: 15000, val: 50, owned: 0 }, // 1.5만
+        { name: '🔌 가정용 머신', type: 'bps', basePrice: 80000, val: 200, owned: 0 }, // 8만
         
-        // Lv 3
-        { name: '🎓 바리스타 1급', type: 'click', basePrice: 2500, val: 50, owned: 0 },
-        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 4000, val: 80, owned: 0 },
+        // [전문가] 사업 시작
+        { name: '🎓 바리스타 1급', type: 'click', basePrice: 1500000, val: 2500, owned: 0 }, // 150만
+        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 5000000, val: 6000, owned: 0 }, // 500만
         
-        // Lv 4
-        { name: '⚡ 전기 장갑', type: 'click', basePrice: 30000, val: 400, owned: 0 },
-        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 50000, val: 600, owned: 0 },
+        // [기업] 대량 생산
+        { name: '⚡ 전기 장갑', type: 'click', basePrice: 80000000, val: 50000, owned: 0 }, // 8000만
+        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 300000000, val: 150000, owned: 0 }, // 3억
         
-        // Lv 5
-        { name: '🦾 사이보그 팔', type: 'click', basePrice: 400000, val: 3500, owned: 0 },
-        { name: '🚢 원두 무역선', type: 'bps', basePrice: 800000, val: 5500, owned: 0 },
+        // [글로벌] 국가급 (억 단위 돌파)
+        { name: '🦾 사이보그 팔', type: 'click', basePrice: 2000000000, val: 800000, owned: 0 }, // 20억
+        { name: '🚢 원두 무역선', type: 'bps', basePrice: 15000000000, val: 4000000, owned: 0 }, // 150억
         
-        // Lv 6
-        { name: '🧬 돌연변이 손', type: 'click', basePrice: 6000000, val: 40000, owned: 0 },
-        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 12000000, val: 60000, owned: 0 },
+        // [하이테크] 조 단위 진입
+        { name: '🧬 돌연변이 손', type: 'click', basePrice: 800000000000, val: 30000000, owned: 0 }, // 8000억
+        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 5000000000000, val: 150000000, owned: 0 }, // 5조
 
-        // Lv 7
-        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 90000000, val: 500000, owned: 0 },
-        { name: '🤖 AI 군단', type: 'bps', basePrice: 150000000, val: 800000, owned: 0 },
+        // [행성급] 경 단위 준비
+        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 200000000000000, val: 2000000000, owned: 0 }, // 200조
+        { name: '🤖 AI 군단', type: 'bps', basePrice: 1500000000000000, val: 8000000000, owned: 0 }, // 1500조
 
-        // Lv 8
-        { name: '🌋 마그마 터치', type: 'click', basePrice: 2000000000, val: 8000000, owned: 0 },
-        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 3500000000, val: 12000000, owned: 0 },
+        // [우주급] 경 단위
+        { name: '🌋 마그마 터치', type: 'click', basePrice: 4e16, val: 1e11, owned: 0 }, // 4경
+        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 3e17, val: 5e11, owned: 0 }, // 30경
 
-        // Lv 9
-        { name: '☄️ 유성우 타격', type: 'click', basePrice: 50000000000, val: 1.5e8, owned: 0 },
-        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 80000000000, val: 2.5e8, owned: 0 },
+        // [성간급] 해 단위
+        { name: '☄️ 유성우 타격', type: 'click', basePrice: 2e18, val: 2e12, owned: 0 }, // 2해
+        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 1e19, val: 8e12, owned: 0 }, // 10해
 
-        // Lv 10
-        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 1e12, val: 2e9, owned: 0 }, 
-        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 1.8e12, val: 3.5e9, owned: 0 },
+        // [은하급] 자 단위
+        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 5e20, val: 3e13, owned: 0 }, 
+        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 4e21, val: 2e14, owned: 0 },
 
-        // Lv 11
-        { name: '🌀 워프 클릭', type: 'click', basePrice: 5e13, val: 8e10, owned: 0 }, 
-        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 9e13, val: 1.5e11, owned: 0 },
+        // [차원급] 양 단위
+        { name: '🌀 워프 클릭', type: 'click', basePrice: 3e23, val: 1e15, owned: 0 }, 
+        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 2e24, val: 8e15, owned: 0 },
 
-        // Lv 12
-        { name: '✨ 현실 조작', type: 'click', basePrice: 1e16, val: 1e13, owned: 0 }, 
-        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 2e16, val: 3e13, owned: 0 }
+        // [신급] 구/간 단위
+        { name: '✨ 현실 조작', type: 'click', basePrice: 1e26, val: 5e16, owned: 0 }, 
+        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 8e27, val: 3e17, owned: 0 }
     ];
 
     const competitors = [
@@ -208,14 +170,22 @@
     ];
 
     function formatNum(num) {
-        if (num < 10000) return Math.floor(num).toLocaleString(); 
-        
+        num = Math.floor(num); 
+        if (num < 10000) return num.toLocaleString();
+
         const units = ["", "만", "억", "조", "경", "해", "자", "양", "구", "간", "정", "재", "극"];
-        const unitIndex = Math.floor(Math.log10(num) / 4);
-        if (unitIndex >= units.length) return "무한";
-        
-        const unitValue = Math.pow(10000, unitIndex);
-        return (num / unitValue).toFixed(2).replace(/\.00$/, '') + units[unitIndex];
+        let unitIndex = Math.floor(Math.log10(num) / 4);
+        if (unitIndex >= units.length) unitIndex = units.length - 1;
+
+        const majorUnitVal = Math.pow(10000, unitIndex);
+        const majorNum = Math.floor(num / majorUnitVal);
+        const minorNum = Math.floor((num % majorUnitVal) / (majorUnitVal / 10000));
+
+        let result = `${majorNum}${units[unitIndex]}`;
+        if (minorNum > 0 && unitIndex > 0) {
+            result += ` ${minorNum}${units[unitIndex - 1]}`;
+        }
+        return result;
     }
 
     let particles = [];
@@ -244,7 +214,7 @@
         }
         ctx.fillStyle = gameState.isFever ? '#ff5722' : '#6d4c41';
         ctx.beginPath();
-        ctx.roundRect(100, 100, 200, 100, 25);
+        ctx.roundRect(50, 80, 300, 140, 25);
         ctx.fill();
         ctx.restore();
 
@@ -264,28 +234,37 @@
         ctx.fillText(gameState.isFever ? "🔥 FEVER MODE (x10) 🔥" : "CLICK TO ROAST", 110, 250);
     }
 
-    canvas.addEventListener('mousedown', (e) => {
+    function handleInput(e) {
+        e.preventDefault(); 
         const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+        const points = e.changedTouches ? e.changedTouches : [{clientX: e.clientX, clientY: e.clientY}];
 
-        if (x > 100 && x < 300 && y > 100 && y < 200) {
-            const multiplier = gameState.isFever ? 10 : 1;
-            const clickGain = gameState.baseClick * multiplier;
-            
-            gameState.beans += clickGain;
-            gameState.manualTotal += clickGain;
-            
-            if (!gameState.isFever) {
-                gameState.feverGauge = Math.min(100, gameState.feverGauge + 5);
-                if (gameState.feverGauge >= 100) startFever();
-            }
+        for (let i = 0; i < points.length; i++) {
+            const p = points[i];
+            const x = (p.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (p.clientY - rect.top) * (canvas.height / rect.height);
 
-            for(let i=0; i<8; i++) {
-                particles.push({x, y, vx:(Math.random()-0.5)*12, vy:(Math.random()-0.5)*12-3, life:1});
+            if (x > 20 && x < 380 && y > 50 && y < 250) {
+                const multiplier = gameState.isFever ? 10 : 1;
+                const clickGain = gameState.baseClick * multiplier;
+                
+                gameState.beans += clickGain;
+                gameState.manualTotal += clickGain;
+                
+                if (!gameState.isFever) {
+                    gameState.feverGauge = Math.min(100, gameState.feverGauge + 5);
+                    if (gameState.feverGauge >= 100) startFever();
+                }
+
+                for(let j=0; j<6; j++) {
+                    particles.push({x: x, y: y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15-5, life:1});
+                }
             }
         }
-    });
+    }
+
+    canvas.addEventListener('touchstart', handleInput, {passive: false});
+    canvas.addEventListener('mousedown', handleInput);
 
     function startFever() {
         gameState.isFever = true;
@@ -371,13 +350,13 @@
         
         gameState.beans += currentBps * delta;
         
-        document.getElementById('beans').textContent = formatNum(Math.floor(gameState.beans));
+        document.getElementById('beans').textContent = formatNum(gameState.beans);
         
         const bpsBadge = document.getElementById('bps');
         const clickBadge = document.getElementById('click-power');
         
-        bpsBadge.textContent = formatNum(Math.floor(currentBps));
-        clickBadge.textContent = formatNum(Math.floor(currentClick));
+        bpsBadge.textContent = formatNum(currentBps);
+        clickBadge.textContent = formatNum(currentClick);
 
         if(gameState.isFever) {
             const shake = `scale(${1 + Math.sin(now/50)*0.1})`;
@@ -390,7 +369,7 @@
             clickBadge.style.transform = 'scale(1)';
         }
 
-        document.getElementById('manualTotal').textContent = formatNum(Math.floor(gameState.manualTotal));
+        document.getElementById('manualTotal').textContent = formatNum(gameState.manualTotal);
         
         const score = Math.max(gameState.baseBps, gameState.baseClick);
         if (score > 0) {
