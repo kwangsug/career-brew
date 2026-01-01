@@ -6,24 +6,56 @@
     <title>커리어 브루: 듀얼 마스터</title>
     <style>
         /* 기본 설정 */
-        body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; background: #f4e4bc; color: #333; margin: 0; padding: 20px; user-select: none; -webkit-user-select: none; box-sizing: border-box; touch-action: manipulation; }
+        body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; background: #fff; color: #333; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; box-sizing: border-box; touch-action: manipulation; height: 100vh; display: flex; align-items: center; justify-content: center; }
         * { box-sizing: border-box; }
 
-        #game-container { max-width: 450px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
+        /* 메인 컨테이너: 완전 무테 스타일 */
+        #game-container { 
+            width: 100%; 
+            max-width: 450px; 
+            height: 100%; 
+            max-height: 100vh;
+            background: #fff; 
+            padding: 20px; 
+            position: relative; 
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 캔버스 */
+        canvas { border-radius: 15px; background: #d2b48c; cursor: pointer; width: 100%; touch-action: none; display: block; margin-bottom: 10px; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
         
-        canvas { border-radius: 15px; background: #d2b48c; cursor: pointer; width: 100%; touch-action: none; display: block; margin-bottom: 15px; -webkit-tap-highlight-color: transparent; }
+        /* UI 영역 스타일 수정 */
+        #ui { margin-bottom: 15px; padding: 15px; background: #faf3e0; border-radius: 20px; border: none; flex-shrink: 0; }
         
-        #ui { margin-bottom: 15px; padding: 15px; background: #faf3e0; border-radius: 15px; border: 1px solid #f0e0c0; }
-        .stat-line { display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; align-items: center; margin-bottom: 8px; color: #3e2723; }
-        .main-beans { font-size: 28px; color: #8b4513; margin: 15px 0; font-weight: 900; word-break: keep-all; letter-spacing: -0.5px; line-height: 1.2; }
+        /* 직급 라인 */
+        .level-line { font-weight: bold; font-size: 16px; color: #3e2723; margin-bottom: 15px; border-bottom: 1px dashed #ccc; padding-bottom: 10px; }
         
-        .badge { padding: 6px 10px; border-radius: 15px; min-width: 70px; display: inline-block; text-align: center; border: 2px solid transparent; font-weight: 800; font-size: 13px; }
+        /* 스탯 라인 (한 줄에 하나씩 + 가운데 정렬) */
+        .stat-row { 
+            display: flex; 
+            justify-content: center; /* 가운데 정렬 */
+            align-items: center; 
+            font-weight: bold; 
+            font-size: 16px; 
+            color: #5d4037; 
+            margin-bottom: 8px; /* 줄 간격 */
+            gap: 10px;
+        }
+
+        .main-beans { font-size: 30px; color: #8b4513; margin: 15px 0 5px 0; font-weight: 900; word-break: keep-all; letter-spacing: -0.5px; line-height: 1.2; }
+        
+        /* 배지 스타일 */
+        .badge { padding: 4px 12px; border-radius: 20px; min-width: 80px; display: inline-block; text-align: center; border: 2px solid transparent; font-weight: 800; font-size: 15px; }
         .badge-click { background: #ffe0b2; color: #e65100; border-color: #ffb74d; }
         .badge-bps { background: #e0f2f1; color: #00695c; border-color: #4db6ac; }
 
-        .store-header { text-align: left; margin: 25px 0 10px 0; font-size: 18px; font-weight: 800; color: #3e2723; border-bottom: 3px solid #eee; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        /* 상점 헤더 */
+        .store-header { text-align: left; margin: 10px 0 10px 0; font-size: 18px; font-weight: 800; color: #3e2723; border-bottom: 3px solid #eee; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 
-        #upgrades { display: flex; flex-direction: column; gap: 10px; height: 380px; overflow-y: auto; padding-right: 5px; padding-bottom: 20px; }
+        /* 상점 리스트 */
+        #upgrades { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; overflow-y: auto; padding-right: 5px; padding-bottom: 20px; min-height: 0; }
         #upgrades::-webkit-scrollbar { width: 6px; }
         #upgrades::-webkit-scrollbar-thumb { background: #8d6e63; border-radius: 10px; }
         #upgrades::-webkit-scrollbar-track { background: #efebe9; }
@@ -32,7 +64,7 @@
             background: #fff; border: 2px solid #eee; padding: 12px 15px 12px 20px; 
             cursor: pointer; border-radius: 12px; display: flex; justify-content: space-between; 
             transition: 0.1s; align-items: center; text-align: left; position: relative; overflow: visible; 
-            min-height: 80px; height: auto; box-shadow: 0 2px 0 #e0e0e0; width: 100%;
+            min-height: 80px; height: auto; box-shadow: 0 2px 0 #e0e0e0; width: 100%; flex-shrink: 0;
         }
         button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 0 #ccc; }
         button:active:not(:disabled) { transform: translateY(0); box-shadow: 0 0 0; }
@@ -49,14 +81,14 @@
         .item-effect { font-weight: 900; font-size: 14px; z-index: 2; text-shadow: 1px 1px 0 #fff; line-height: 1.2; word-break: break-all;}
         .item-lvl { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 3px; }
         
-        .rank-info { font-size: 14px; color: #4e342e; margin-top: 15px; padding: 15px; border-top: 2px dashed #bbb; cursor: pointer; background: #efebe9; border-radius: 10px; font-weight: bold; }
+        .rank-info { font-size: 13px; color: #8d6e63; margin-top: 5px; cursor: pointer; font-weight: bold; flex-shrink: 0; text-align: center; padding: 10px; background: #f5f5f5; border-radius: 10px;}
         
-        /* 알림 메시지 (저장됨 등) */
         #toast { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 3000;}
 
-        /* 하단 컨트롤 바 */
-        .footer-controls { margin-top: 20px; display: flex; justify-content: center; gap: 10px; opacity: 0.6; }
-        .footer-btn { background: none; border: 1px solid #ccc; padding: 5px 15px; font-size: 12px; color: #666; border-radius: 5px; cursor: pointer; }
+        /* 하단 컨트롤 */
+        .footer-controls { margin-top: 10px; display: flex; justify-content: center; gap: 15px; align-items: center; flex-shrink: 0; padding-bottom: 5px;}
+        .save-btn { background: #8d6e63; color: white; border: none; padding: 8px 15px; font-size: 12px; border-radius: 20px; box-shadow: none; min-height: 0; width: auto; display: inline-block;}
+        .reset-btn { background: none; border: none; padding: 5px; font-size: 11px; color: #ccc; text-decoration: underline; cursor: pointer; min-height: 0; width: auto; box-shadow: none; display: inline-block; }
         
         #ranking-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center; }
         .modal-content { background:white; width:90%; max-width:380px; padding:25px; border-radius:20px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
@@ -66,37 +98,41 @@
 
 <div id="game-container">
     <div id="toast">저장되었습니다</div>
-    <h1>☕ 커리어 브루: 듀얼 마스터</h1>
+    <h1>☕ 커리어 브루</h1>
+    
     <div id="ui">
-        <div class="stat-line">
-            <span>직급: <span id="level" style="color:#d2691e; font-size:18px;">알바생</span></span>
+        <div class="level-line">
+            직급: <span id="level" style="color:#d2691e; font-size:20px;">알바생</span>
         </div>
         
-        <div class="stat-line">
-            <span>👆 클릭당: <span id="click-power" class="badge badge-click">1</span></span>
-            <span>⚙️ 초당: <span id="bps" class="badge badge-bps">0</span></span>
+        <div class="stat-row">
+            <span>👆 클릭당:</span>
+            <span id="click-power" class="badge badge-click">1</span>
+        </div>
+        <div class="stat-row">
+            <span>⚙️ 초당:</span>
+            <span id="bps" class="badge badge-bps">0</span>
         </div>
 
         <div class="main-beans"><span id="beans">0</span> 🫘</div>
-        <div style="font-size: 13px; color: #5d4037; font-weight: bold; margin-top:5px;">손으로 볶은 콩: <span id="manualTotal">0</span></div>
+        <div style="font-size: 13px; color: #8d6e63; font-weight: bold;">손으로 볶은 콩: <span id="manualTotal">0</span></div>
     </div>
 
-    <canvas id="game" width="400" height="300"></canvas>
+    <canvas id="game" width="400" height="250"></canvas>
 
     <div class="store-header">
-        <span>🛒 상점 (Store)</span>
-        <span style="font-size:13px; font-weight:bold; color:#795548;">아이템을 구매하세요!</span>
+        <span>🛒 상점</span>
+        <span style="font-size:13px; font-weight:bold; color:#795548;">성장하세요!</span>
     </div>
     <div id="upgrades"></div>
     
     <div class="rank-info" onclick="showRanking()">
-        📍 <b>우주 통합 랭킹 확인하기</b> (Click)<br>
-        <span style="font-size:12px; font-weight:normal; color:#5d4037">나의 실시간 순위는?</span> 
-        <span id="my-rank-text" style="color:#d84315; font-weight:900; font-size:16px;">집계 중...</span>
+        🏆 <b>실시간 랭킹 확인</b> (내 순위: <span id="my-rank-text" style="color:#d84315;">...</span>)
     </div>
 
     <div class="footer-controls">
-        <button class="footer-btn" onclick="saveGame(true)">💾 수동 저장</button>
+        <button class="save-btn" onclick="saveGame(true)">💾 수동 저장</button>
+        <button class="reset-btn" onclick="resetGame()">초기화</button>
     </div>
 </div>
 
@@ -238,6 +274,13 @@
         });
     }
 
+    function resetGame() {
+        if (confirm("⚠️ 정말로 모든 데이터를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) {
+            localStorage.removeItem('careerBrewSaveV2');
+            location.reload();
+        }
+    }
+
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
@@ -262,7 +305,7 @@
         }
         ctx.fillStyle = gameState.isFever ? '#ff5722' : '#6d4c41';
         ctx.beginPath();
-        ctx.roundRect(50, 80, 300, 140, 25);
+        ctx.roundRect(50, 70, 300, 130, 25);
         ctx.fill();
         ctx.restore();
 
@@ -273,13 +316,13 @@
             if (p.life <= 0) particles.splice(i, 1);
         });
 
-        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(50, 260, 300, 14);
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(50, 220, 300, 14);
         ctx.fillStyle = gameState.isFever ? '#d50000' : '#fb8c00';
-        ctx.fillRect(50, 260, 300 * (gameState.feverGauge/100), 14);
+        ctx.fillRect(50, 220, 300 * (gameState.feverGauge/100), 14);
         
         ctx.fillStyle = (gameState.baseBps > 1e8) ? '#fff' : '#3e2723'; 
         ctx.font = '900 16px Arial';
-        ctx.fillText(gameState.isFever ? "🔥 FEVER MODE (x10) 🔥" : "CLICK TO ROAST", 110, 250);
+        ctx.fillText(gameState.isFever ? "🔥 FEVER MODE (x10) 🔥" : "CLICK TO ROAST", 110, 210);
     }
 
     function handleInput(e) {
@@ -292,7 +335,7 @@
             const x = (p.clientX - rect.left) * (canvas.width / rect.width);
             const y = (p.clientY - rect.top) * (canvas.height / rect.height);
 
-            if (x > 20 && x < 380 && y > 50 && y < 250) {
+            if (x > 20 && x < 380 && y > 20 && y < 250) {
                 const multiplier = gameState.isFever ? 10 : 1;
                 const clickGain = gameState.baseClick * multiplier;
                 
