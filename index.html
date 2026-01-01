@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>커리어 브루: 듀얼 마스터</title>
+    <style>
+        /* 기본 설정 및 폰트 */
+        body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; background: #f4e4bc; color: #333; margin: 0; padding: 20px; user-select: none; -webkit-user-select: none; box-sizing: border-box; }
+        * { box-sizing: border-box; }
+
+        /* 메인 컨테이너 */
+        #game-container { max-width: 450px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
+        
+        /* 캔버스 (로스팅 영역) */
+        canvas { border-radius: 15px; background: #d2b48c; cursor: pointer; width: 100%; touch-action: none; display: block; margin-bottom: 15px; }
+        
+        /* 상단 정보창 (UI) */
+        #ui { margin-bottom: 15px; padding: 15px; background: #faf3e0; border-radius: 15px; border: 1px solid #f0e0c0; }
+        
+        /* 스탯 라인 */
+        .stat-line { display: flex; justify-content: space-between; font-weight: bold; font-size: 15px; align-items: center; margin-bottom: 8px; color: #3e2723; }
+        .main-beans { font-size: 32px; color: #8b4513; margin: 15px 0; font-weight: 900; word-break: keep-all; letter-spacing: -1px; }
+        
+        /* 배지 스타일 */
+        .badge { padding: 6px 12px; border-radius: 15px; min-width: 80px; display: inline-block; text-align: center; border: 2px solid transparent; font-weight: 800; font-size: 14px; }
+        .badge-click { background: #ffe0b2; color: #e65100; border-color: #ffb74d; }
+        .badge-bps { background: #e0f2f1; color: #00695c; border-color: #4db6ac; }
+
+        /* 상점 헤더 */
+        .store-header { text-align: left; margin: 25px 0 10px 0; font-size: 18px; font-weight: 800; color: #3e2723; border-bottom: 3px solid #eee; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* 업그레이드 리스트 영역 (스크롤) */
+        #upgrades { display: flex; flex-direction: column; gap: 10px; height: 380px; overflow-y: auto; padding-right: 5px; padding-bottom: 20px; }
+        #upgrades::-webkit-scrollbar { width: 6px; }
+        #upgrades::-webkit-scrollbar-thumb { background: #8d6e63; border-radius: 10px; }
+        #upgrades::-webkit-scrollbar-track { background: #efebe9; }
+
+        /* 버튼 스타일 (수정됨: 높이 제한 해제) */
+        button { 
+            background: #fff; 
+            border: 2px solid #eee; 
+            padding: 12px 15px 12px 20px; /* 왼쪽 패딩을 늘려서 텍스트 겹침 방지 */
+            cursor: pointer; 
+            border-radius: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            transition: 0.1s; 
+            align-items: center; 
+            text-align: left; 
+            position: relative; 
+            overflow: visible; /* 짤림 방지 */
+            min-height: 80px; /* 고정 높이 대신 최소 높이 사용 */
+            height: auto; 
+            box-shadow: 0 2px 0 #e0e0e0;
+            width: 100%;
+        }
+        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 0 #ccc; }
+        button:active:not(:disabled) { transform: translateY(0); box-shadow: 0 0 0; }
+        button:disabled { background: #f9f9f9; color: #bbb; cursor: not-allowed; opacity: 0.7; border-color: #f0f0f0; box-shadow: none; }
+        
+        /* 버튼 왼쪽 컬러 바 */
+        .btn-click { border-left: 8px solid #ff9800; }
+        .btn-bps { border-left: 8px solid #009688; }
+
+        /* 아이템 정보 텍스트 */
+        .item-info { display: flex; flex-direction: column; gap: 4px; z-index: 2; flex: 1; }
+        .item-name { font-weight: 900; font-size: 16px; color: #222; letter-spacing: -0.5px; line-height: 1.2; }
+        
+        .item-cost { 
+            font-size: 13px; 
+            color: #5d4037; 
+            font-weight: 700; 
+            background: rgba(139, 69, 19, 0.08); 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            display: inline-block; 
+            width: fit-content; 
+            margin-top: 2px;
+        }
+        
+        /* 우측 효과 텍스트 */
+        .item-right { text-align: right; min-width: 90px; }
+        .item-effect { font-weight: 900; font-size: 15px; z-index: 2; text-shadow: 1px 1px 0 #fff; line-height: 1.2; }
+        .item-lvl { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 3px; }
+        
+        /* 랭킹 정보 */
+        .rank-info { font-size: 14px; color: #4e342e; margin-top: 15px; padding: 15px; border-top: 2px dashed #bbb; cursor: pointer; background: #efebe9; border-radius: 10px; font-weight: bold; }
+        
+        /* 모달 창 */
+        #ranking-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center; }
+        .modal-content { background:white; width:90%; max-width:380px; padding:25px; border-radius:20px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .rank-item { display: flex; justify-content: space-between; padding: 12px 15px; margin: 6px 0; border-radius: 8px; font-size: 15px; background: #f5f5f5; }
+        .rank-me { background: #fff3e0; font-weight: 900; border: 2px solid #ffcc80; color: #e65100; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <h1>☕ 커리어 브루: 듀얼 마스터</h1>
+    <div id="ui">
+        <div class="stat-line">
+            <span>직급: <span id="level" style="color:#d2691e; font-size:18px;">알바생</span></span>
+        </div>
+        
+        <div class="stat-line">
+            <span>👆 클릭당: <span id="click-power" class="badge badge-click">1</span></span>
+            <span>⚙️ 초당: <span id="bps" class="badge badge-bps">0</span></span>
+        </div>
+
+        <div class="main-beans"><span id="beans">0</span> 🫘</div>
+        <div style="font-size: 13px; color: #5d4037; font-weight: bold; margin-top:5px;">손으로 볶은 콩: <span id="manualTotal">0</span></div>
+    </div>
+
+    <canvas id="game" width="400" height="300"></canvas>
+
+    <div class="store-header">
+        <span>🛒 상점 (Store)</span>
+        <span style="font-size:13px; font-weight:bold; color:#795548;">아이템을 구매하세요!</span>
+    </div>
+    <div id="upgrades"></div>
+    
+    <div class="rank-info" onclick="showRanking()">
+        📍 <b>우주 통합 랭킹 확인하기</b> (Click)<br>
+        <span style="font-size:12px; font-weight:normal; color:#5d4037">나의 실시간 순위는?</span> 
+        <span id="my-rank-text" style="color:#d84315; font-weight:900; font-size:16px;">집계 중...</span>
+    </div>
+</div>
+
+<div id="ranking-modal">
+    <div class="modal-content">
+        <h2 style="color:#3e2723; margin-top:0; border-bottom:2px solid #eee; padding-bottom:10px;">🏆 실시간 랭킹</h2>
+        <div id="ranking-list"></div>
+        <button onclick="closeRanking()" style="width:100%; justify-content:center; margin-top:20px; height:50px; font-size:18px; font-weight:bold; background:#3e2723; color:white; border:none; border-radius:10px;">닫기</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    let gameState = {
+        beans: 0,
+        baseBps: 0,
+        baseClick: 1,
+        manualTotal: 0,
+        feverGauge: 0,
+        isFever: false,
+        lastTime: Date.now(),
+        levels: ['알바생', '주임', '대리', '과장', '차장', '부장', '이사', 'CEO', '커피 재벌', '원두 장관', '지구 대통령', '태양계 관리자', '은하계 지배자', '우주의 주인', '커피의 신']
+    };
+
+    const items = [
+        // Lv 1
+        { name: '🧤 고무 장갑', type: 'click', basePrice: 20, val: 1, owned: 0 },
+        { name: '☕ 모카포트', type: 'bps', basePrice: 50, val: 1, owned: 0 },
+        
+        // Lv 2
+        { name: '🔨 원두 망치', type: 'click', basePrice: 300, val: 8, owned: 0 },
+        { name: '🔌 가정용 머신', type: 'bps', basePrice: 500, val: 15, owned: 0 },
+        
+        // Lv 3
+        { name: '🎓 바리스타 1급', type: 'click', basePrice: 2500, val: 50, owned: 0 },
+        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 4000, val: 80, owned: 0 },
+        
+        // Lv 4
+        { name: '⚡ 전기 장갑', type: 'click', basePrice: 30000, val: 400, owned: 0 },
+        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 50000, val: 600, owned: 0 },
+        
+        // Lv 5
+        { name: '🦾 사이보그 팔', type: 'click', basePrice: 400000, val: 3500, owned: 0 },
+        { name: '🚢 원두 무역선', type: 'bps', basePrice: 800000, val: 5500, owned: 0 },
+        
+        // Lv 6
+        { name: '🧬 돌연변이 손', type: 'click', basePrice: 6000000, val: 40000, owned: 0 },
+        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 12000000, val: 60000, owned: 0 },
+
+        // Lv 7
+        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 90000000, val: 500000, owned: 0 },
+        { name: '🤖 AI 군단', type: 'bps', basePrice: 150000000, val: 800000, owned: 0 },
+
+        // Lv 8
+        { name: '🌋 마그마 터치', type: 'click', basePrice: 2000000000, val: 8000000, owned: 0 },
+        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 3500000000, val: 12000000, owned: 0 },
+
+        // Lv 9
+        { name: '☄️ 유성우 타격', type: 'click', basePrice: 50000000000, val: 1.5e8, owned: 0 },
+        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 80000000000, val: 2.5e8, owned: 0 },
+
+        // Lv 10
+        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 1e12, val: 2e9, owned: 0 }, 
+        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 1.8e12, val: 3.5e9, owned: 0 },
+
+        // Lv 11
+        { name: '🌀 워프 클릭', type: 'click', basePrice: 5e13, val: 8e10, owned: 0 }, 
+        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 9e13, val: 1.5e11, owned: 0 },
+
+        // Lv 12
+        { name: '✨ 현실 조작', type: 'click', basePrice: 1e16, val: 1e13, owned: 0 }, 
+        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 2e16, val: 3e13, owned: 0 }
+    ];
+
+    const competitors = [
+        { name: "은하계 커피 연합", bps: 5e15 },
+        { name: "일론 머스크", bps: 3e9 }, 
+        { name: "역삼동 카누 장인", bps: 2000 },
+        { name: "옆집 스타벅스", bps: 5000 }
+    ];
+
+    function formatNum(num) {
+        if (num < 10000) return Math.floor(num).toLocaleString(); 
+        
+        const units = ["", "만", "억", "조", "경", "해", "자", "양", "구", "간", "정", "재", "극"];
+        const unitIndex = Math.floor(Math.log10(num) / 4);
+        if (unitIndex >= units.length) return "무한";
+        
+        const unitValue = Math.pow(10000, unitIndex);
+        return (num / unitValue).toFixed(2).replace(/\.00$/, '') + units[unitIndex];
+    }
+
+    let particles = [];
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if (gameState.baseBps > 1e8 || gameState.baseClick > 1e8) {
+            ctx.fillStyle = '#0d1b2a'; 
+            ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            for(let i=0; i<20; i++) {
+                ctx.globalAlpha = Math.random();
+                ctx.fillRect(Math.random()*400, Math.random()*300, 2, 2);
+            }
+            ctx.globalAlpha = 1.0;
+        } else {
+            ctx.fillStyle = gameState.isFever ? '#fff9c4' : '#d2b48c';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        ctx.save();
+        if(gameState.isFever) {
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = "#ffeb3b";
+        }
+        ctx.fillStyle = gameState.isFever ? '#ff5722' : '#6d4c41';
+        ctx.beginPath();
+        ctx.roundRect(100, 100, 200, 100, 25);
+        ctx.fill();
+        ctx.restore();
+
+        particles.forEach((p, i) => {
+            ctx.fillStyle = (gameState.baseBps > 1e8) ? `rgba(255, 255, 255, ${p.life})` : `rgba(62, 39, 35, ${p.life})`;
+            ctx.beginPath(); ctx.arc(p.x, p.y, 7, 0, Math.PI*2); ctx.fill();
+            p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life -= 0.03;
+            if (p.life <= 0) particles.splice(i, 1);
+        });
+
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(50, 260, 300, 14);
+        ctx.fillStyle = gameState.isFever ? '#d50000' : '#fb8c00';
+        ctx.fillRect(50, 260, 300 * (gameState.feverGauge/100), 14);
+        
+        ctx.fillStyle = (gameState.baseBps > 1e8) ? '#fff' : '#3e2723'; 
+        ctx.font = '900 16px Arial';
+        ctx.fillText(gameState.isFever ? "🔥 FEVER MODE (x10) 🔥" : "CLICK TO ROAST", 110, 250);
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        if (x > 100 && x < 300 && y > 100 && y < 200) {
+            const multiplier = gameState.isFever ? 10 : 1;
+            const clickGain = gameState.baseClick * multiplier;
+            
+            gameState.beans += clickGain;
+            gameState.manualTotal += clickGain;
+            
+            if (!gameState.isFever) {
+                gameState.feverGauge = Math.min(100, gameState.feverGauge + 5);
+                if (gameState.feverGauge >= 100) startFever();
+            }
+
+            for(let i=0; i<8; i++) {
+                particles.push({x, y, vx:(Math.random()-0.5)*12, vy:(Math.random()-0.5)*12-3, life:1});
+            }
+        }
+    });
+
+    function startFever() {
+        gameState.isFever = true;
+        const fInter = setInterval(() => {
+            gameState.feverGauge -= 1.0;
+            if (gameState.feverGauge <= 0) {
+                gameState.isFever = false;
+                gameState.feverGauge = 0;
+                clearInterval(fInter);
+            }
+        }, 50);
+    }
+
+    function updateStore() {
+        const upgradesDiv = document.getElementById('upgrades');
+        upgradesDiv.innerHTML = '';
+        items.forEach((item) => {
+            const price = Math.floor(item.basePrice * Math.pow(1.15, item.owned));
+            const btn = document.createElement('button');
+            
+            const isClickItem = item.type === 'click';
+            btn.className = isClickItem ? 'btn-click' : 'btn-bps';
+            btn.disabled = gameState.beans < price;
+            
+            const effectColor = isClickItem ? '#e65100' : '#00695c';
+            const typeIcon = isClickItem ? '👆' : '⚙️';
+            const unitText = isClickItem ? '/클릭' : '/초';
+
+            btn.innerHTML = `
+                <div class="item-info">
+                    <span class="item-name">${typeIcon} ${item.name}</span>
+                    <span class="item-cost">비용: ${formatNum(price)} 🫘</span>
+                </div>
+                <div class="item-right">
+                    <div class="item-lvl">Lv. ${item.owned}</div>
+                    <div class="item-effect" style="color:${effectColor}">+${formatNum(item.val)}${unitText}</div>
+                </div>
+            `;
+            
+            btn.onclick = (e) => {
+                if (gameState.beans >= price) {
+                    gameState.beans -= price;
+                    item.owned++;
+                    if (item.type === 'click') {
+                        gameState.baseClick += item.val;
+                    } else {
+                        gameState.baseBps += item.val;
+                    }
+                    updateStore(); 
+                }
+            };
+            upgradesDiv.appendChild(btn);
+        });
+    }
+
+    function showRanking() {
+        const modal = document.getElementById('ranking-modal');
+        const list = document.getElementById('ranking-list');
+        const currentBps = gameState.baseBps * (gameState.isFever ? 10 : 1);
+        
+        const allRanks = [...competitors, { name: "나 (플레이어)", bps: currentBps }]
+            .sort((a, b) => b.bps - a.bps);
+
+        list.innerHTML = allRanks.map((p, i) => `
+            <div class="rank-item ${p.name === "나 (플레이어)" ? 'rank-me' : ''}">
+                <span>${i+1}위. ${p.name}</span>
+                <span>${formatNum(p.bps)} BPS</span>
+            </div>
+        `).join('');
+        modal.style.display = 'flex';
+    }
+
+    function closeRanking() { document.getElementById('ranking-modal').style.display = 'none'; }
+
+    function gameLoop() {
+        const now = Date.now();
+        const delta = (now - gameState.lastTime) / 1000;
+        gameState.lastTime = now;
+
+        const multiplier = gameState.isFever ? 10 : 1;
+        const currentBps = gameState.baseBps * multiplier;
+        const currentClick = gameState.baseClick * multiplier;
+        
+        gameState.beans += currentBps * delta;
+        
+        document.getElementById('beans').textContent = formatNum(Math.floor(gameState.beans));
+        
+        const bpsBadge = document.getElementById('bps');
+        const clickBadge = document.getElementById('click-power');
+        
+        bpsBadge.textContent = formatNum(Math.floor(currentBps));
+        clickBadge.textContent = formatNum(Math.floor(currentClick));
+
+        if(gameState.isFever) {
+            const shake = `scale(${1 + Math.sin(now/50)*0.1})`;
+            bpsBadge.parentElement.style.color = '#d50000';
+            bpsBadge.style.transform = shake;
+            clickBadge.style.transform = shake;
+        } else {
+            bpsBadge.parentElement.style.color = '#5d4037';
+            bpsBadge.style.transform = 'scale(1)';
+            clickBadge.style.transform = 'scale(1)';
+        }
+
+        document.getElementById('manualTotal').textContent = formatNum(Math.floor(gameState.manualTotal));
+        
+        const score = Math.max(gameState.baseBps, gameState.baseClick);
+        if (score > 0) {
+            const levelIndex = Math.min(Math.floor(Math.log10(score)), gameState.levels.length - 1);
+            if (levelIndex >= 0) document.getElementById('level').textContent = gameState.levels[levelIndex];
+        }
+
+        const myRank = [...competitors, {bps: currentBps}].sort((a,b)=>b.bps-a.bps).findIndex(p => p.bps === currentBps) + 1;
+        document.getElementById('my-rank-text').textContent = `${myRank}위`;
+
+        const buttons = document.querySelectorAll('#upgrades button');
+        items.forEach((item, i) => {
+            const price = Math.floor(item.basePrice * Math.pow(1.15, item.owned));
+            if(buttons[i]) buttons[i].disabled = gameState.beans < price;
+        });
+
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    updateStore();
+    gameLoop();
+</script>
+</body>
+</html>
