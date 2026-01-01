@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>커리어 브루: 파이널 컷</title>
+    <title>커리어 브루: 체인지</title>
     <style>
         /* 기본 설정 */
         body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; background: #fff; color: #333; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; box-sizing: border-box; touch-action: manipulation; height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -103,7 +103,7 @@
 
 <div id="game-container">
     <div id="toast">저장되었습니다</div>
-    <h1>☕ 커리어 브루: 파이널 컷</h1>
+    <h1>☕ 커리어 브루: 체인지</h1>
     
     <div id="ui">
         <div class="level-line">
@@ -164,14 +164,13 @@
         levels: ['알바생', '주임', '대리', '과장', '차장', '부장', '이사', 'CEO', '커피 재벌', '원두 장관', '지구 대통령', '태양계 관리자', '은하계 지배자', '우주의 주인', '커피의 신']
     };
 
-    // [Ver 7.0 - Final Cut Balance]
-    // 1. T1: 50 vs 100 (2배)
-    // 2. T11: 4해
-    // 3. T12: 22해
+    // [Ver 9.0 - 타입 스왑]
+    // 1. 고무장갑: click -> bps
+    // 2. 모카포트: bps -> click
     const items = [
         // [Tier 1] 시작: 딱 2배 (50 vs 100)
-        { name: '🧤 고무 장갑', type: 'click', basePrice: 50, val: 1, owned: 0 },
-        { name: '☕ 모카포트', type: 'bps', basePrice: 100, val: 2, owned: 0 },
+        { name: '🧤 고무 장갑', type: 'bps', basePrice: 50, val: 1, owned: 0 }, // 타입 변경됨 (bps)
+        { name: '☕ 모카포트', type: 'click', basePrice: 100, val: 2, owned: 0 }, // 타입 변경됨 (click)
         
         // [Tier 2] 도약
         { name: '🔨 원두 망치', type: 'click', basePrice: 2000, val: 20, owned: 0 },
@@ -256,8 +255,8 @@
             },
             items: items.map(item => ({ name: item.name, owned: item.owned }))
         };
-        // 밸런스 복구로 V7 키 유지
-        localStorage.setItem('careerBrewSaveV7', JSON.stringify(saveData)); 
+        // 타입 변경으로 인한 세이브 충돌 방지: 키값 V9로 변경
+        localStorage.setItem('careerBrewSaveV9', JSON.stringify(saveData)); 
         if (showToast) {
             const toast = document.getElementById('toast');
             toast.style.opacity = 1;
@@ -266,7 +265,7 @@
     }
 
     function loadGame() {
-        const savedString = localStorage.getItem('careerBrewSaveV7');
+        const savedString = localStorage.getItem('careerBrewSaveV9');
         if (savedString) {
             try {
                 const savedData = JSON.parse(savedString);
@@ -310,7 +309,7 @@
 
     function resetGame() {
         if (confirm("⚠️ 정말로 모든 데이터를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) {
-            localStorage.removeItem('careerBrewSaveV7');
+            localStorage.removeItem('careerBrewSaveV9');
             location.reload();
         }
     }
