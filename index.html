@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>커리어 브루: 듀얼 마스터</title>
+    <title>커리어 브루: 파이널 컷</title>
     <style>
         /* 기본 설정 */
         body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; background: #fff; color: #333; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; box-sizing: border-box; touch-action: manipulation; height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -71,12 +71,12 @@
         }
         button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 0 #ccc; }
         button:active:not(:disabled) { transform: translateY(0); box-shadow: 0 0 0; }
-        button:disabled { background: #f9f9f9; color: #bbb; cursor: not-allowed; opacity: 0.7; border-color: #f0f0f0; box-shadow: none; }
-        button.locked { background: #eee; border-color: #ddd; opacity: 0.8; }
+        button:disabled { background: #f9f9f9; color: #aaa; cursor: not-allowed; opacity: 1; border-color: #f0f0f0; box-shadow: none; }
+        button.locked { background: #f5f5f5; border-color: #ddd; opacity: 0.7; }
         
         .btn-click { border-left: 6px solid #ff9800; }
         .btn-bps { border-left: 6px solid #009688; }
-        .btn-locked { border-left: 6px solid #9e9e9e; }
+        .btn-locked { border-left: 6px solid #bdbdbd; }
 
         .item-info { display: flex; flex-direction: column; gap: 3px; z-index: 2; flex: 1; }
         .item-name { font-weight: 900; font-size: 15px; color: #222; letter-spacing: -0.5px; line-height: 1.2; }
@@ -103,7 +103,7 @@
 
 <div id="game-container">
     <div id="toast">저장되었습니다</div>
-    <h1>☕ 커리어 브루</h1>
+    <h1>☕ 커리어 브루: 파이널 컷</h1>
     
     <div id="ui">
         <div class="level-line">
@@ -164,67 +164,68 @@
         levels: ['알바생', '주임', '대리', '과장', '차장', '부장', '이사', 'CEO', '커피 재벌', '원두 장관', '지구 대통령', '태양계 관리자', '은하계 지배자', '우주의 주인', '커피의 신']
     };
 
-    // [최종 밸런스 패치 (Rescaled)]
-    // 목표: 마지막 아이템 가격이 '해' 단위 내에 머물도록 조정
-    // 성장 계수 약 60배씩 증가
+    // [Ver 7.0 - Final Cut Balance]
+    // 1. T1: 50 vs 100 (2배)
+    // 2. T11: 4해
+    // 3. T12: 22해
     const items = [
-        // [Tier 1] 시작
+        // [Tier 1] 시작: 딱 2배 (50 vs 100)
         { name: '🧤 고무 장갑', type: 'click', basePrice: 50, val: 1, owned: 0 },
-        { name: '☕ 모카포트', type: 'bps', basePrice: 250, val: 1, owned: 0 }, // ROI 250s
+        { name: '☕ 모카포트', type: 'bps', basePrice: 100, val: 2, owned: 0 },
         
         // [Tier 2] 도약
-        { name: '🔨 원두 망치', type: 'click', basePrice: 3000, val: 30, owned: 0 }, 
-        { name: '🔌 가정용 머신', type: 'bps', basePrice: 15000, val: 15, owned: 0 }, // ROI 1000s
+        { name: '🔨 원두 망치', type: 'click', basePrice: 2000, val: 20, owned: 0 },
+        { name: '🔌 가정용 머신', type: 'bps', basePrice: 8000, val: 60, owned: 0 },
         
         // [Tier 3] 전문
-        { name: '🎓 바리스타 1급', type: 'click', basePrice: 180000, val: 1800, owned: 0 },
-        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 900000, val: 900, owned: 0 },
+        { name: '🎓 바리스타 1급', type: 'click', basePrice: 60000, val: 400, owned: 0 },
+        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 300000, val: 1500, owned: 0 },
         
         // [Tier 4] 기업
-        { name: '⚡ 전기 장갑', type: 'click', basePrice: 10800000, val: 100000, owned: 0 },
-        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 54000000, val: 50000, owned: 0 },
+        { name: '⚡ 전기 장갑', type: 'click', basePrice: 2500000, val: 10000, owned: 0 },
+        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 15000000, val: 50000, owned: 0 },
         
         // [Tier 5] 국가 (억 단위)
-        { name: '🦾 사이보그 팔', type: 'click', basePrice: 648000000, val: 6000000, owned: 0 }, 
-        { name: '🚢 원두 무역선', type: 'bps', basePrice: 3200000000, val: 3000000, owned: 0 },
+        { name: '🦾 사이보그 팔', type: 'click', basePrice: 200000000, val: 600000, owned: 0 }, 
+        { name: '🚢 원두 무역선', type: 'bps', basePrice: 1200000000, val: 3000000, owned: 0 },
         
-        // [Tier 6] 글로벌 (백억/천억)
-        { name: '🧬 돌연변이 손', type: 'click', basePrice: 38800000000, val: 300000000, owned: 0 }, 
-        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 194400000000, val: 150000000, owned: 0 },
+        // [Tier 6] 글로벌 (백억 ~ 천억)
+        { name: '🧬 돌연변이 손', type: 'click', basePrice: 30000000000, val: 70000000, owned: 0 }, 
+        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 180000000000, val: 400000000, owned: 0 },
         
         // [Tier 7] 미래 (조 단위)
-        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 2300000000000, val: 20000000000, owned: 0 }, 
-        { name: '🤖 AI 군단', type: 'bps', basePrice: 11000000000000, val: 10000000000, owned: 0 },
+        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 3000000000000, val: 6000000000, owned: 0 }, 
+        { name: '🤖 AI 군단', type: 'bps', basePrice: 20000000000000, val: 35000000000, owned: 0 },
         
-        // [Tier 8] 지구 (백조)
-        { name: '🌋 마그마 터치', type: 'click', basePrice: 139000000000000, val: 1200000000000, owned: 0 }, 
-        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 699000000000000, val: 600000000000, owned: 0 },
+        // [Tier 8] 지구 (백조 ~ 천조)
+        { name: '🌋 마그마 터치', type: 'click', basePrice: 350000000000000, val: 700000000000, owned: 0 }, 
+        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 2000000000000000, val: 3500000000000, owned: 0 }, 
         
         // [Tier 9] 우주 (경 단위 진입)
-        { name: '☄️ 유성우 타격', type: 'click', basePrice: 8398000000000000, val: 70000000000000, owned: 0 }, 
-        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 41000000000000000, val: 35000000000000, owned: 0 },
+        { name: '☄️ 유성우 타격', type: 'click', basePrice: 30000000000000000, val: 50000000000000, owned: 0 }, // 3경
+        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 150000000000000000, val: 200000000000000, owned: 0 }, // 15경
         
-        // [Tier 10] 태양 (백경)
-        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 500000000000000000, val: 4000000000000000, owned: 0 }, 
-        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 2510000000000000000, val: 2000000000000000, owned: 0 },
+        // [Tier 10] 태양 (천경) - T11과의 징검다리
+        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 1000000000000000000, val: 1500000000000000, owned: 0 }, // 1000경
+        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 5000000000000000000, val: 8000000000000000, owned: 0 }, // 5000경 (0.5해)
         
-        // [Tier 11] 은하 (천경/해)
-        { name: '🌀 워프 클릭', type: 'click', basePrice: 30230000000000000000, val: 200000000000000000, owned: 0 }, 
-        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 150000000000000000000, val: 100000000000000000, owned: 0 },
+        // [Tier 11] 은하 (4해 맞춤)
+        { name: '🌀 워프 클릭', type: 'click', basePrice: 10000000000000000000, val: 20000000000000000, owned: 0 }, // 1해
+        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 40000000000000000000, val: 40000000000000000, owned: 0 }, // ★ 4해
         
-        // [Tier 12] 신 (십해) - 마지막은 좀 비싸게
-        { name: '✨ 현실 조작', type: 'click', basePrice: 1800000000000000000000, val: 15000000000000000000, owned: 0 }, 
-        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 9000000000000000000000, val: 7500000000000000000, owned: 0 }
+        // [Tier 12] 신 (22해 맞춤)
+        { name: '✨ 현실 조작', type: 'click', basePrice: 80000000000000000000, val: 60000000000000000, owned: 0 }, // 8해
+        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 220000000000000000000, val: 250000000000000000, owned: 0 } // ★ 22해
     ];
 
+    // 경쟁자 점수 조정 (최종 보스 30해)
     const competitors = [
-        { name: "은하계 커피 연합", bps: 5e15 },
-        { name: "일론 머스크", bps: 3e9 }, 
-        { name: "역삼동 카누 장인", bps: 2000 },
-        { name: "옆집 스타벅스", bps: 5000 }
+        { name: "은하계 커피 연합", bps: 300000000000000000000 }, // 30해
+        { name: "일론 머스크", bps: 5000000000 }, 
+        { name: "역삼동 카누 장인", bps: 4000 },
+        { name: "옆집 스타벅스", bps: 8000 }
     ];
 
-    // 단위 표시 함수 ('해'까지만 표시, 그 이상은 숫자만 커짐)
     function formatNum(num) {
         num = Math.floor(num); 
         if (num < 10000) return num.toLocaleString();
@@ -232,7 +233,6 @@
         const units = ["", "만", "억", "조", "경", "해"];
         let unitIndex = Math.floor(Math.log10(num) / 4);
         
-        // '해'보다 큰 단위가 나오면 그냥 '해'로 고정하고 앞 숫자를 키움
         if (unitIndex >= units.length) unitIndex = units.length - 1;
 
         const majorUnitVal = Math.pow(10000, unitIndex);
@@ -257,7 +257,8 @@
             },
             items: items.map(item => ({ name: item.name, owned: item.owned }))
         };
-        localStorage.setItem('careerBrewSaveV2', JSON.stringify(saveData));
+        // 밸런스 변경으로 키 업데이트 V7
+        localStorage.setItem('careerBrewSaveV7', JSON.stringify(saveData)); 
         if (showToast) {
             const toast = document.getElementById('toast');
             toast.style.opacity = 1;
@@ -266,7 +267,7 @@
     }
 
     function loadGame() {
-        const savedString = localStorage.getItem('careerBrewSaveV2');
+        const savedString = localStorage.getItem('careerBrewSaveV7');
         if (savedString) {
             try {
                 const savedData = JSON.parse(savedString);
@@ -310,7 +311,7 @@
 
     function resetGame() {
         if (confirm("⚠️ 정말로 모든 데이터를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) {
-            localStorage.removeItem('careerBrewSaveV2');
+            localStorage.removeItem('careerBrewSaveV7');
             location.reload();
         }
     }
@@ -350,6 +351,7 @@
             if (p.life <= 0) particles.splice(i, 1);
         });
 
+        // 게이지 바
         ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(50, 145, 300, 10);
         ctx.fillStyle = gameState.isFever ? '#d50000' : '#fb8c00';
         ctx.fillRect(50, 145, 300 * (gameState.feverGauge/100), 10);
@@ -379,7 +381,7 @@
                 gameState.manualTotal += clickGain;
                 
                 if (!gameState.isFever) {
-                    gameState.feverGauge = Math.min(100, gameState.feverGauge + 5);
+                    gameState.feverGauge = Math.min(100, gameState.feverGauge + 2);
                     if (gameState.feverGauge >= 100) startFever();
                 }
 
@@ -437,9 +439,6 @@
             let displayEffectStyle = `color:${effectColor}`;
 
             if (isLocked) {
-                displayName = "???";
-                displayCost = "??? 🫘";
-                displayOwned = "Lv.?";
                 displayEffect = "???";
                 displayEffectStyle = "color:#999";
             }
@@ -483,7 +482,7 @@
             .sort((a, b) => b.bps - a.bps);
 
         list.innerHTML = allRanks.map((p, i) => `
-            <div class="rank-item ${p.name === "나 (플레이어)" ? 'rank-me' : ''}">
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-weight:${p.name==="나 (플레이어)"?'bold':'normal'}; color:${p.name==="나 (플레이어)"?'#d84315':'#555'}">
                 <span>${i+1}위. ${p.name}</span>
                 <span>${formatNum(p.bps)} BPS</span>
             </div>
@@ -492,6 +491,12 @@
     }
 
     function closeRanking() { document.getElementById('ranking-modal').style.display = 'none'; }
+
+    setInterval(() => {
+        if (!gameState.isFever && gameState.feverGauge > 0) {
+            gameState.feverGauge = Math.max(0, gameState.feverGauge - 0.5);
+        }
+    }, 100);
 
     function gameLoop() {
         const now = Date.now();
