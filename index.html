@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>커리어 브루: 시크릿</title>
+    <title>커리어 브루: 파이널 컷</title>
     <style>
         /* 기본 설정 */
         body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; background: #fff; color: #333; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; box-sizing: border-box; touch-action: manipulation; height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -103,7 +103,7 @@
 
 <div id="game-container">
     <div id="toast">저장되었습니다</div>
-    <h1>☕ 커리어 브루: 시크릿</h1>
+    <h1>☕ 커리어 브루: 파이널 컷</h1>
     
     <div id="ui">
         <div class="level-line">
@@ -164,7 +164,7 @@
         levels: ['알바생', '주임', '대리', '과장', '차장', '부장', '이사', 'CEO', '커피 재벌', '원두 장관', '지구 대통령', '태양계 관리자', '은하계 지배자', '우주의 주인', '커피의 신']
     };
 
-    // [Ver 7.0 밸런스 유지]
+    // [Ver 7.0 - Final Cut Balance]
     // 1. T1: 50 vs 100 (2배)
     // 2. T11: 4해
     // 3. T12: 22해
@@ -256,8 +256,8 @@
             },
             items: items.map(item => ({ name: item.name, owned: item.owned }))
         };
-        // 밸런스(순서 표시) 변경으로 키 업데이트 V8
-        localStorage.setItem('careerBrewSaveV8', JSON.stringify(saveData)); 
+        // 밸런스 복구로 V7 키 유지
+        localStorage.setItem('careerBrewSaveV7', JSON.stringify(saveData)); 
         if (showToast) {
             const toast = document.getElementById('toast');
             toast.style.opacity = 1;
@@ -266,7 +266,7 @@
     }
 
     function loadGame() {
-        const savedString = localStorage.getItem('careerBrewSaveV8');
+        const savedString = localStorage.getItem('careerBrewSaveV7');
         if (savedString) {
             try {
                 const savedData = JSON.parse(savedString);
@@ -310,7 +310,7 @@
 
     function resetGame() {
         if (confirm("⚠️ 정말로 모든 데이터를 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) {
-            localStorage.removeItem('careerBrewSaveV8');
+            localStorage.removeItem('careerBrewSaveV7');
             location.reload();
         }
     }
@@ -409,24 +409,12 @@
     function updateStore() {
         const upgradesDiv = document.getElementById('upgrades');
         upgradesDiv.innerHTML = '';
-        
-        let nextLockedShown = false; // "다음 잠긴 아이템"을 하나 보여줬는지 체크
-
         items.forEach((item, index) => {
-            // 가격 계산
             const price = Math.floor(item.basePrice * Math.pow(1.15, item.owned));
             
-            // 잠금 상태 확인
             let isLocked = false;
             if (index > 0 && items[index-1].owned === 0) {
                 isLocked = true;
-            }
-
-            // [블라인드 로직]
-            // 이미 잠긴 아이템을 하나 그렸다면, 그 뒤에 있는 아이템들은 아예 그리지 않고 종료
-            if (isLocked) {
-                if (nextLockedShown) return; // 이미 다음 단계(미래)를 하나 보여줬으므로 뒤는 숨김
-                nextLockedShown = true; // 이제 하나 보여준다고 체크함
             }
 
             const btn = document.createElement('button');
@@ -550,33 +538,18 @@
         const myRank = [...competitors, {bps: currentBps}].sort((a,b)=>b.bps-a.bps).findIndex(p => p.bps === currentBps) + 1;
         document.getElementById('my-rank-text').textContent = `${myRank}위`;
 
-        // 상점 버튼 상태 업데이트 (disable/enable)
-        // 블라인드 처리된 버튼들은 DOM에 아예 없으므로 있는 것들만 업데이트
         const buttons = document.querySelectorAll('#upgrades button');
-        // 주의: 버튼 개수는 items 개수보다 적을 수 있음 (블라인드 때문)
-        // 따라서 items를 순회하면서 버튼 인덱스를 따로 관리해야 함
-        
-        let btnIdx = 0;
-        let nextLockedShown = false;
-
         items.forEach((item, i) => {
+            const price = Math.floor(item.basePrice * Math.pow(1.15, item.owned));
+            
             let isLocked = false;
             if (i > 0 && items[i-1].owned === 0) {
                 isLocked = true;
             }
-
-            // 블라인드 로직과 동일하게 순회해야 버튼 매칭이 됨
-            if (isLocked) {
-                if (nextLockedShown) return; 
-                nextLockedShown = true;
+            
+            if (buttons[i]) {
+                buttons[i].disabled = isLocked || (gameState.beans < price);
             }
-
-            // 여기까지 왔다면 화면에 버튼이 존재함
-            if (buttons[btnIdx]) {
-                const price = Math.floor(item.basePrice * Math.pow(1.15, item.owned));
-                buttons[btnIdx].disabled = isLocked || (gameState.beans < price);
-            }
-            btnIdx++;
         });
 
         draw();
