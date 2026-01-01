@@ -5,79 +5,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>커리어 브루: 지그재그 (온라인)</title>
     <style>
-        /* 스타일은 그대로 유지 */
-        body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; background: #fff; color: #333; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; box-sizing: border-box; touch-action: manipulation; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        /* 기본 설정 (배경색은 JS로 제어하기 위해 body 배경 제거) */
+        body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; box-sizing: border-box; touch-action: manipulation; height: 100vh; display: flex; align-items: center; justify-content: center; transition: background 1s, color 1s; }
         * { box-sizing: border-box; }
-        #game-container { width: 100%; max-width: 450px; height: 100%; max-height: 100vh; background: #fff; padding: 15px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
-        h1 { margin: 5px 0 10px 0; font-size: 22px; color: #3e2723; }
-        canvas { border-radius: 12px; background: #faf3e0; cursor: pointer; width: 100%; touch-action: none; display: block; margin-bottom: 5px; -webkit-tap-highlight-color: transparent; flex-shrink: 0; box-shadow: inset 0 0 20px rgba(139, 69, 19, 0.1); }
-        #ui { margin-bottom: 10px; padding: 12px; background: #faf3e0; border-radius: 15px; border: none; flex-shrink: 0; }
-        .level-line { font-weight: bold; font-size: 15px; color: #3e2723; margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
-        .stat-row { display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 14px; color: #5d4037; margin-bottom: 5px; gap: 10px; }
-        .main-beans { font-size: 38px; color: #8b4513; margin: 8px 0 5px 0; font-weight: 900; word-break: keep-all; letter-spacing: -1px; line-height: 1.0; }
-        .badge { padding: 3px 10px; border-radius: 20px; min-width: 70px; display: inline-block; text-align: center; border: 2px solid transparent; font-weight: 800; font-size: 13px; }
+        
+        #game-container { width: 100%; max-width: 450px; height: 100%; max-height: 100vh; padding: 15px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: background 1s; }
+        
+        h1 { margin: 5px 0 10px 0; font-size: 20px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 1s; }
+        
+        /* 캔버스 배경 투명하게 (상위 배경 따라가도록) */
+        canvas { border-radius: 12px; background: rgba(255,255,255,0.2); cursor: pointer; width: 100%; touch-action: none; display: block; margin-bottom: 5px; -webkit-tap-highlight-color: transparent; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); backdrop-filter: blur(5px); }
+        
+        #ui { margin-bottom: 10px; padding: 12px; background: rgba(255,255,255,0.5); border-radius: 15px; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; display: flex; flex-direction: column; align-items: center; backdrop-filter: blur(10px); }
+        .level-line { font-weight: bold; font-size: 15px; margin-bottom: 5px; border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 5px; width: 100%; }
+        
+        #mini-ranking { font-size: 15px; color: #1565c0; font-weight: 900; background: rgba(227, 242, 253, 0.9); padding: 8px 20px; border-radius: 20px; margin-bottom: 5px; animation: fadeIn 0.5s; border: 2px solid #90caf9; width: fit-content; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        #msg-bar { font-size: 13px; font-weight: bold; margin-top: 8px; height: 18px; transition: opacity 0.5s; opacity: 1; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .fade-out { opacity: 0 !important; }
+
+        .main-beans { font-size: 38px; margin: 0 0 5px 0; font-weight: 900; word-break: keep-all; letter-spacing: -1px; line-height: 1.0; text-shadow: 2px 2px 0 rgba(255,255,255,0.5); }
+        
+        .stats-container { display: flex; justify-content: center; gap: 15px; width: 100%; margin-top: 5px; border-top: 1px dashed rgba(0,0,0,0.2); padding-top: 8px;}
+        .stat-row { display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-size: 13px; }
+        
+        .badge { padding: 3px 10px; border-radius: 20px; min-width: 60px; display: inline-block; text-align: center; border: 2px solid transparent; font-weight: 800; font-size: 13px; margin-top: 2px;}
         .badge-click { background: #ffe0b2; color: #e65100; border-color: #ffb74d; }
         .badge-bps { background: #e0f2f1; color: #00695c; border-color: #4db6ac; }
-        .store-header { text-align: left; margin: 5px 0 8px 0; font-size: 16px; font-weight: 800; color: #3e2723; border-bottom: 2px solid #eee; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        
+        .store-header { text-align: left; margin: 5px 0 8px 0; font-size: 16px; font-weight: 800; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         #upgrades { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; overflow-y: auto; padding-right: 5px; padding-bottom: 10px; min-height: 150px; }
         #upgrades::-webkit-scrollbar { width: 4px; }
-        #upgrades::-webkit-scrollbar-thumb { background: #8d6e63; border-radius: 10px; }
-        button { background: #fff; border: 2px solid #eee; padding: 10px 12px 10px 15px; cursor: pointer; border-radius: 10px; display: flex; justify-content: space-between; transition: 0.1s; align-items: center; text-align: left; position: relative; overflow: visible; min-height: 70px; height: auto; box-shadow: 0 2px 0 #e0e0e0; width: 100%; flex-shrink: 0; }
-        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 0 #ccc; }
+        #upgrades::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        
+        button { background: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.1); padding: 10px 12px 10px 15px; cursor: pointer; border-radius: 10px; display: flex; justify-content: space-between; transition: 0.1s; align-items: center; text-align: left; position: relative; overflow: visible; min-height: 70px; height: auto; box-shadow: 0 2px 0 rgba(0,0,0,0.1); width: 100%; flex-shrink: 0; }
+        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
         button:active:not(:disabled) { transform: translateY(0); box-shadow: 0 0 0; }
-        button:disabled { background: #f9f9f9; color: #aaa; cursor: not-allowed; opacity: 1; border-color: #f0f0f0; box-shadow: none; }
-        button.locked { background: #f5f5f5; border-color: #ddd; opacity: 0.7; }
+        button:disabled { background: rgba(240,240,240,0.8); color: #aaa; cursor: not-allowed; opacity: 1; border-color: transparent; box-shadow: none; }
+        button.locked { background: rgba(230,230,230,0.8); border-color: transparent; opacity: 0.7; }
         .btn-click { border-left: 6px solid #ff9800; }
         .btn-bps { border-left: 6px solid #009688; }
         .btn-locked { border-left: 6px solid #bdbdbd; }
+        
         .item-info { display: flex; flex-direction: column; gap: 3px; z-index: 2; flex: 1; }
-        .item-name { font-weight: 900; font-size: 15px; color: #222; letter-spacing: -0.5px; line-height: 1.2; }
+        .item-name { font-weight: 900; font-size: 15px; color: #333; letter-spacing: -0.5px; line-height: 1.2; }
         .item-cost { font-size: 12px; color: #5d4037; font-weight: 700; background: rgba(139, 69, 19, 0.08); padding: 2px 5px; border-radius: 4px; display: inline-block; width: fit-content; }
         .item-right { text-align: right; min-width: 90px; display: flex; flex-direction: column; align-items: flex-end;}
         .item-effect { font-weight: 900; font-size: 13px; z-index: 2; text-shadow: 1px 1px 0 #fff; line-height: 1.2; word-break: break-all;}
         .item-lvl { font-size: 11px; color: #888; font-weight: bold; }
-        .rank-info { font-size: 12px; color: #8d6e63; margin-top: 5px; cursor: pointer; font-weight: bold; flex-shrink: 0; text-align: center; padding: 8px; background: #f5f5f5; border-radius: 8px;}
+        
+        .rank-info { font-size: 12px; margin-top: 5px; cursor: pointer; font-weight: bold; flex-shrink: 0; text-align: center; padding: 8px; background: rgba(255,255,255,0.7); border-radius: 8px;}
         #toast { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 3000;}
         .footer-controls { margin-top: 8px; display: flex; justify-content: center; gap: 15px; align-items: center; flex-shrink: 0; padding-bottom: 5px;}
         .save-btn { background: #8d6e63; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 20px; box-shadow: none; min-height: 0; width: auto; display: inline-block;}
-        .reset-btn { background: none; border: none; padding: 5px; font-size: 11px; color: #ccc; text-decoration: underline; cursor: pointer; min-height: 0; width: auto; box-shadow: none; display: inline-block; }
+        .reset-btn { background: none; border: none; padding: 5px; font-size: 11px; color: inherit; text-decoration: underline; cursor: pointer; min-height: 0; width: auto; box-shadow: none; display: inline-block; opacity: 0.7;}
+        
         #ranking-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center; }
         .modal-content { background:white; width:90%; max-width:380px; padding:25px; border-radius:20px; text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .tab-container { display: flex; justify-content: space-around; margin-bottom: 15px; border-bottom: 2px solid #eee; }
         .tab-btn { background: none; border: none; padding: 10px; font-weight: bold; color: #888; cursor: pointer; flex: 1; border-bottom: 3px solid transparent; box-shadow: none; min-height: 40px; border-radius: 0; }
         .tab-btn.active { color: #3e2723; border-bottom-color: #3e2723; }
         .rank-list-container { max-height: 300px; overflow-y: auto; text-align: left; }
-        .rank-item { display: flex; justify-content: space-between; padding: 10px 5px; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+        .rank-item { display: flex; justify-content: space-between; padding: 10px 5px; border-bottom: 1px solid #f5f5f5; font-size: 14px; color:#333; }
         .rank-item.my-rank { background: #fff3e0; border-radius: 8px; font-weight: bold; color: #d84315; border: 1px solid #ffe0b2; }
         .rank-badge { width: 24px; display: inline-block; text-align: center; font-weight: bold; color: #8d6e63; margin-right: 5px; }
         .top-3 { color: #fbc02d; text-shadow: 1px 1px 0 #fff9c4; font-size: 16px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 <div id="game-container">
     <div id="toast">저장되었습니다</div>
-    <h1>☕ 커리어 브루: 지그재그</h1>
+    <h1 id="game-title">☕ 커리어 브루: 지그재그</h1>
+    
     <div id="ui">
         <div class="level-line">
-            <span id="player-name" style="font-size:14px; color:#555; margin-right:5px;"></span>
+            <span id="player-name" style="font-size:14px; margin-right:5px; opacity:0.8;"></span>
             직급: <span id="level" style="color:#d2691e; font-size:18px;">알바생</span>
         </div>
-        <div class="stat-row">
-            <span>👆 클릭당:</span> <span id="click-power" class="badge badge-click">1</span>
-        </div>
-        <div class="stat-row">
-            <span>⚙️ 초당:</span> <span id="bps" class="badge badge-bps">0</span>
-        </div>
+
+        <div id="mini-ranking">🏆 순위 계산중...</div>
+
         <div class="main-beans"><span id="beans">0</span> 🫘</div>
-        <div style="font-size: 12px; color: #8d6e63; font-weight: bold;">손으로 볶은 콩: <span id="manualTotal">0</span></div>
+        <div style="font-size: 12px; font-weight: bold; margin-bottom:5px; opacity:0.7;">손으로 볶은 콩: <span id="manualTotal">0</span></div>
+
+        <div class="stats-container">
+            <div class="stat-row">
+                <span>👆 클릭당</span>
+                <span id="click-power" class="badge badge-click">1</span>
+            </div>
+            <div class="stat-row">
+                <span>⚙️ 초당</span>
+                <span id="bps" class="badge badge-bps">0</span>
+            </div>
+        </div>
+
+        <div id="msg-bar">오늘도 화이팅!</div>
     </div>
+
     <canvas id="game" width="400" height="180"></canvas>
+    
     <div class="store-header">
         <span>🛒 상점</span>
-        <span style="font-size:12px; font-weight:bold; color:#795548;">성장하세요!</span>
+        <span style="font-size:12px; font-weight:bold; opacity:0.8;">성장하세요!</span>
     </div>
     <div id="upgrades"></div>
-    <div class="rank-info" onclick="window.showRanking()">🏆 <b>실시간 랭킹</b> (확인하기)</div>
+    
+    <div class="rank-info" onclick="window.showRanking()">🏆 <b>전체 랭킹 보기</b> (클릭)</div>
+    
     <div class="footer-controls">
         <button class="save-btn" onclick="window.saveGame(true)">💾 저장 & 랭킹등록</button>
         <button class="reset-btn" onclick="window.resetGame()">초기화</button>
@@ -105,47 +140,43 @@
     const beanImg = new Image();
     beanImg.src = "https://cdn-icons-png.flaticon.com/512/751/751663.png";
 
-    // 전역 변수로 선언하여 모듈 스크립트에서도 접근 가능하게 함
     window.gameState = {
         beans: 0, baseBps: 0, baseClick: 1, manualTotal: 0,
         feverGauge: 0, isFever: false, lastTime: Date.now(), clickScale: 1.0,
         playerName: "익명", playerId: "",
-        levels: ['알바생', '주임', '대리', '과장', '차장', '부장', '이사', 'CEO', '커피 재벌', '원두 장관', '지구 대통령', '태양계 관리자', '은하계 지배자', '우주의 주인', '커피의 신']
+        levels: ['알바생', '주임', '대리', '과장', '차장', '부장', '이사', 'CEO', '커피 재벌', '원두 장관', '지구 대통령', '태양계 관리자', '은하계 지배자', '우주의 주인', '커피의 신'],
+        
+        // [신규] 황금 원두 상태
+        goldenBean: { active: false, x: 0, y: 0, life: 0, timer: 0 }
     };
 
     window.items = [
-        { name: '🧤 고무 장갑', type: 'bps', basePrice: 50, val: 1, owned: 0 }, 
-        { name: '☕ 모카포트', type: 'click', basePrice: 200, val: 3, owned: 0 },
+        { name: '☕ 모카포트', type: 'bps', basePrice: 50, val: 1, owned: 0 }, 
+        { name: '🧤 고무 장갑', type: 'click', basePrice: 100, val: 2, owned: 0 }, 
         { name: '🔌 가정용 머신', type: 'bps', basePrice: 2000, val: 20, owned: 0 }, 
-        { name: '🔨 원두 망치', type: 'click', basePrice: 8000, val: 60, owned: 0 }, 
-        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 60000, val: 400, owned: 0 }, 
-        { name: '🎓 바리스타 1급', type: 'click', basePrice: 250000, val: 1200, owned: 0 }, 
-        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 2000000, val: 10000, owned: 0 },
-        { name: '⚡ 전기 장갑', type: 'click', basePrice: 8000000, val: 30000, owned: 0 }, 
-        { name: '🚢 원두 무역선', type: 'bps', basePrice: 80000000, val: 250000, owned: 0 }, 
-        { name: '🦾 사이보그 팔', type: 'click', basePrice: 320000000, val: 750000, owned: 0 }, 
-        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 3000000000, val: 6000000, owned: 0 }, 
-        { name: '🧬 돌연변이 손', type: 'click', basePrice: 12000000000, val: 18000000, owned: 0 }, 
-        { name: '🤖 AI 군단', type: 'bps', basePrice: 100000000000, val: 150000000, owned: 0 }, 
-        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 400000000000, val: 450000000, owned: 0 }, 
-        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 5000000000000, val: 4000000000, owned: 0 }, 
-        { name: '🌋 마그마 터치', type: 'click', basePrice: 20000000000000, val: 12000000000, owned: 0 }, 
-        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 250000000000000, val: 100000000000, owned: 0 }, 
-        { name: '☄️ 유성우 타격', type: 'click', basePrice: 1000000000000000, val: 300000000000, owned: 0 }, 
-        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 15000000000000000, val: 3000000000000, owned: 0 },
-        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 60000000000000000, val: 9000000000000, owned: 0 },
-        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 1000000000000000000, val: 80000000000000, owned: 0 }, 
-        { name: '🌀 워프 클릭', type: 'click', basePrice: 4000000000000000000, val: 240000000000000, owned: 0 }, 
-        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 80000000000000000000, val: 2000000000000000, owned: 0 }, 
-        { name: '✨ 현실 조작', type: 'click', basePrice: 320000000000000000000, val: 6000000000000000, owned: 0 },
-        { name: '⏳ 타임머신 배달', type: 'bps', basePrice: 50000000000000000000000, val: 800000000000000000, owned: 0 }, 
-        { name: '🕰️ 시간 역행', type: 'click', basePrice: 200000000000000000000000, val: 2400000000000000000, owned: 0 }, 
-        { name: '🌌 멀티버스 체인점', type: 'bps', basePrice: 40000000000000000000000000, val: 500000000000000000000, owned: 0 }, 
-        { name: '👥 도플갱어 일꾼', type: 'click', basePrice: 160000000000000000000000000, val: 1500000000000000000000, owned: 0 }, 
-        { name: '💭 이데아 로스팅', type: 'bps', basePrice: 30000000000000000000000000000, val: 600000000000000000000000, owned: 0 }, 
-        { name: '♾️ 무한의 숟가락', type: 'click', basePrice: 120000000000000000000000000000, val: 1800000000000000000000000, owned: 0 }, 
-        { name: '💻 개발자 콘솔', type: 'bps', basePrice: 50000000000000000000000000000000, val: 1000000000000000000000000000, owned: 0 }, 
-        { name: '👑 게임의 신', type: 'click', basePrice: 200000000000000000000000000000000, val: 30000000000000000000000000000, owned: 0 }
+        { name: '🔨 원두 망치', type: 'click', basePrice: 4000, val: 40, owned: 0 }, 
+        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 50000, val: 500, owned: 0 }, 
+        { name: '🎓 바리스타 1급', type: 'click', basePrice: 100000, val: 1000, owned: 0 }, 
+        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 1500000, val: 15000, owned: 0 },
+        { name: '⚡ 전기 장갑', type: 'click', basePrice: 3000000, val: 30000, owned: 0 }, 
+        { name: '🚢 원두 무역선', type: 'bps', basePrice: 50000000, val: 500000, owned: 0 }, 
+        { name: '🦾 사이보그 팔', type: 'click', basePrice: 100000000, val: 1000000, owned: 0 }, 
+        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 2000000000, val: 20000000, owned: 0 }, 
+        { name: '🧬 돌연변이 손', type: 'click', basePrice: 4000000000, val: 40000000, owned: 0 }, 
+        { name: '🤖 AI 군단', type: 'bps', basePrice: 80000000000, val: 800000000, owned: 0 }, 
+        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 160000000000, val: 1600000000, owned: 0 }, 
+        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 3000000000000, val: 30000000000, owned: 0 }, 
+        { name: '🌋 마그마 터치', type: 'click', basePrice: 6000000000000, val: 60000000000, owned: 0 }, 
+        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 150000000000000, val: 1000000000000, owned: 0 }, 
+        { name: '☄️ 유성우 타격', type: 'click', basePrice: 300000000000000, val: 2000000000000, owned: 0 }, 
+        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 8000000000000000, val: 50000000000000, owned: 0 },
+        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 16000000000000000, val: 100000000000000, owned: 0 },
+        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 500000000000000000, val: 3000000000000000, owned: 0 }, 
+        { name: '🌀 워프 클릭', type: 'click', basePrice: 1000000000000000000, val: 6000000000000000, owned: 0 }, 
+        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 20000000000000000000, val: 100000000000000000, owned: 0 }, 
+        { name: '✨ 현실 조작', type: 'click', basePrice: 50000000000000000000, val: 250000000000000000, owned: 0 },
+        { name: '⏳ 시간의 지배자', type: 'bps', basePrice: 150000000000000000000, val: 800000000000000000, owned: 0 }, 
+        { name: '👑 커피의 신', type: 'click', basePrice: 450000000000000000000, val: 2000000000000000000, owned: 0 } 
     ];
 
     window.formatNum = function(num) {
@@ -165,7 +196,6 @@
     let particles = [];
     let floatingTexts = [];
 
-    // 저장 함수 (일단 로컬 저장만 수행, 서버 저장은 모듈에서 덮어씌움)
     window.saveGame = function(showToast = false) {
         const saveData = {
             gameState: {
@@ -177,11 +207,8 @@
             },
             items: window.items.map(item => ({ name: item.name, owned: item.owned }))
         };
-        localStorage.setItem('careerBrewSaveV16', JSON.stringify(saveData));
-
-        // Firebase 모듈이 로드되었으면 실행됨 (없으면 무시)
+        localStorage.setItem('careerBrewSaveV17', JSON.stringify(saveData));
         if (window.firebaseSave) window.firebaseSave();
-
         if (showToast) {
             const toast = document.getElementById('toast');
             toast.style.opacity = 1;
@@ -192,9 +219,9 @@
     function generateUUID() { return 'user-' + Math.random().toString(36).substr(2, 9); }
 
     window.loadGame = function() {
-        const savedString = localStorage.getItem('careerBrewSaveV16');
-        if (!savedString && localStorage.getItem('careerBrewSaveV13')) {
-             localStorage.setItem('careerBrewSaveV16', localStorage.getItem('careerBrewSaveV13'));
+        const savedString = localStorage.getItem('careerBrewSaveV17');
+        if (!savedString && localStorage.getItem('careerBrewSaveV16')) {
+             localStorage.setItem('careerBrewSaveV17', localStorage.getItem('careerBrewSaveV16'));
         }
         if (savedString) {
             try {
@@ -214,11 +241,19 @@
                 recalculateStats();
             } catch (e) { console.error(e); }
         } else {
+            const adjectives = ["졸린", "행복한", "배고픈", "야근하는", "카페인", "열정적인", "돈 많은", "가난한", "전설의", "초보"];
+            const nouns = ["바리스타", "개발자", "사장님", "알바생", "건물주", "커피중독자", "로스터", "원두감별사"];
+            const randomName = adjectives[Math.floor(Math.random() * adjectives.length)] + " " + nouns[Math.floor(Math.random() * nouns.length)];
+
             window.gameState.playerId = generateUUID();
-            let inputName = prompt("랭킹에 등록할 닉네임을 입력하세요!", "바리스타");
+            let inputName = prompt("랭킹에 등록할 닉네임을 입력하세요!", randomName);
             if(inputName) window.gameState.playerName = inputName;
+            else window.gameState.playerName = randomName;
         }
         document.getElementById('player-name').textContent = window.gameState.playerName;
+        const titleText = `☕ ${window.gameState.playerName}의 커리어 브루: 지그재그`;
+        document.title = titleText;
+        document.getElementById('game-title').innerText = titleText;
     }
 
     function recalculateStats() {
@@ -232,9 +267,39 @@
 
     window.resetGame = function() {
         if (confirm("⚠️ 초기화하시겠습니까?")) {
-            localStorage.removeItem('careerBrewSaveV16');
+            localStorage.removeItem('careerBrewSaveV17');
             location.reload();
         }
+    }
+
+    // [신규] 배경 업데이트 함수 (직급에 따라 색상 변경)
+    function updateBackground(levelIndex) {
+        const body = document.body;
+        const container = document.getElementById('game-container');
+        const h1 = document.querySelector('h1');
+        
+        let bgColor = "#fff";
+        let textColor = "#333";
+
+        if (levelIndex < 3) { // 알바생 ~ 대리
+            bgColor = "#fff8e1"; // 베이지
+            textColor = "#3e2723";
+        } else if (levelIndex < 7) { // 과장 ~ CEO
+            bgColor = "#e0f2f1"; // 민트
+            textColor = "#004d40";
+        } else if (levelIndex < 11) { // 재벌 ~ 태양계
+            bgColor = "#fff3e0"; // 골드
+            textColor = "#bf360c";
+        } else { // 우주 ~ 신
+            bgColor = "#1a237e"; // 우주색
+            textColor = "#fff";
+        }
+
+        body.style.background = bgColor;
+        container.style.background = bgColor;
+        body.style.color = textColor;
+        h1.style.color = textColor;
+        document.getElementById('manualTotal').parentElement.style.color = textColor;
     }
 
     function draw() {
@@ -243,12 +308,17 @@
             window.gameState.clickScale += 0.03;
             if (window.gameState.clickScale > 1.0) window.gameState.clickScale = 1.0;
         }
-        if (window.gameState.baseBps > 1e8 || window.gameState.baseClick > 1e8) {
-            ctx.fillStyle = '#0d1b2a'; ctx.fillRect(0,0,canvas.width, canvas.height);
-            ctx.fillStyle = '#fff'; for(let i=0; i<20; i++) { ctx.globalAlpha = Math.random(); ctx.fillRect(Math.random()*400, Math.random()*180, 2, 2); } ctx.globalAlpha = 1.0;
-        } else {
-            ctx.fillStyle = window.gameState.isFever ? '#fff9c4' : '#faf3e0'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 배경 그리기 (우주 단계면 별 추가)
+        if (window.gameState.baseBps > 1e16 || window.gameState.baseClick > 1e16) {
+            ctx.fillStyle = 'rgba(255,255,255,0.1)'; 
+            for(let i=0; i<5; i++) { 
+                ctx.beginPath();
+                ctx.arc(Math.random()*400, Math.random()*180, Math.random()*2, 0, Math.PI*2);
+                ctx.fill();
+            }
         }
+
         ctx.save();
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2 + 15;
@@ -262,6 +332,32 @@
             ctx.fillStyle = window.gameState.isFever ? '#ff5722' : '#6d4c41'; ctx.beginPath(); ctx.arc(0, 0, 50, 0, Math.PI*2); ctx.fill();
         }
         ctx.restore();
+
+        // [신규] 황금 원두 그리기
+        if (window.gameState.goldenBean.active) {
+            const gb = window.gameState.goldenBean;
+            ctx.save();
+            ctx.translate(gb.x, gb.y);
+            // 반짝이는 효과
+            const scale = 1 + Math.sin(Date.now() / 100) * 0.1;
+            ctx.scale(scale, scale);
+            ctx.fillStyle = '#ffd700'; // 골드
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(0, 0, 20, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('★', 0, 0);
+            ctx.restore();
+            
+            gb.life -= 0.01;
+            if (gb.life <= 0) gb.active = false;
+        }
+
         particles.forEach((p, i) => {
             ctx.fillStyle = (window.gameState.baseBps > 1e8) ? `rgba(255, 255, 255, ${p.life})` : `rgba(62, 39, 35, ${p.life})`;
             ctx.beginPath(); ctx.arc(p.x, p.y, 7, 0, Math.PI*2); ctx.fill();
@@ -272,14 +368,14 @@
         floatingTexts.forEach((ft, i) => {
             ctx.save(); ctx.globalAlpha = ft.life;
             ctx.font = (window.gameState.isFever ? '900 24px' : '800 18px') + ' Arial';
-            ctx.fillStyle = window.gameState.isFever ? '#d50000' : '#fff';
+            ctx.fillStyle = ft.color || (window.gameState.isFever ? '#d50000' : '#fff');
             ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4;
             ctx.fillText(`+${formatNum(ft.val)}`, ft.x, ft.y); ctx.restore();
             ft.y -= 1; ft.life -= 0.02; if (ft.life <= 0) floatingTexts.splice(i, 1);
         });
         ctx.fillStyle = 'rgba(0,0,0,0.1)'; ctx.fillRect(50, 155, 300, 10);
         ctx.fillStyle = window.gameState.isFever ? '#d50000' : '#fb8c00'; ctx.fillRect(50, 155, 300 * (window.gameState.feverGauge/100), 10);
-        ctx.fillStyle = (window.gameState.baseBps > 1e8) ? '#fff' : '#8d6e63'; 
+        ctx.fillStyle = (window.gameState.baseBps > 1e16) ? '#fff' : '#8d6e63'; 
         ctx.font = '900 16px Arial'; ctx.textAlign = 'center';
         ctx.fillText(window.gameState.isFever ? "🔥 FEVER MODE (x10) 🔥" : "CLICK TO ROAST", 200, 105); ctx.textAlign = 'start';
     }
@@ -292,6 +388,19 @@
             const p = points[i];
             const x = (p.clientX - rect.left) * (canvas.width / rect.width);
             const y = (p.clientY - rect.top) * (canvas.height / rect.height);
+
+            // [신규] 황금 원두 클릭 체크
+            if (window.gameState.goldenBean.active) {
+                const gb = window.gameState.goldenBean;
+                const dist = Math.sqrt((x - gb.x)**2 + (y - gb.y)**2);
+                if (dist < 40) { // 클릭 성공
+                    window.gameState.goldenBean.active = false;
+                    startFever(); // 피버 모드 발동
+                    floatingTexts.push({ x: x, y: y, val: "LUCKY!", life: 2.0, color: "#ffd700" });
+                    continue; // 일반 클릭은 패스
+                }
+            }
+
             if (x > 0 && x < 400 && y > 0 && y < 180) {
                 window.gameState.clickScale = 0.9;
                 const multiplier = window.gameState.isFever ? 10 : 1;
@@ -311,11 +420,48 @@
 
     function startFever() {
         window.gameState.isFever = true;
-        const fInter = setInterval(() => {
-            window.gameState.feverGauge -= 1.0;
-            if (window.gameState.feverGauge <= 0) { window.gameState.isFever = false; window.gameState.feverGauge = 0; clearInterval(fInter); }
+        window.gameState.feverGauge = 100;
+        // 기존 인터벌이 있으면 제거하고 새로 시작 (황금원두 중복 방지)
+        if (window.feverInterval) clearInterval(window.feverInterval);
+        
+        window.feverInterval = setInterval(() => {
+            window.gameState.feverGauge -= 0.5; // 피버 지속시간 약간 증가
+            if (window.gameState.feverGauge <= 0) { 
+                window.gameState.isFever = false; 
+                window.gameState.feverGauge = 0; 
+                clearInterval(window.feverInterval); 
+            }
         }, 50);
     }
+
+    const messageTemplates = [
+        "{name}님, 카페인 수혈이 시급합니다!",
+        "잠은 죽어서 자는 거죠, {name}님?",
+        "옆집 스타벅스가 {name}님을 견제합니다.",
+        "{name}님의 손가락은 국보급입니다.",
+        "이 속도면 화성 갈끄니까~ ({name}님)",
+        "{name}님, 랭킹 1위가 코앞입니다!",
+        "버그 아닙니다. {name}님의 실력입니다.",
+        "지구의 모든 원두를 볶으세요, {name}님!",
+        "{name}님, 오늘 야근 각인가요?",
+        "돈 버는 기계가 되셨군요, {name}님.",
+        "클릭! 클릭! 부자 되세요, {name}님!",
+        "개발자가 {name}님을 응원합니다.",
+        "{name}님, 커피 한 잔의 여유 어때요?",
+        "로스팅의 신, 그 이름은 {name}!",
+        "{name}님, 키보드 살살 다뤄주세요."
+    ];
+    
+    function updateMessage() {
+        const el = document.getElementById('msg-bar');
+        el.classList.add('fade-out'); 
+        setTimeout(() => {
+            const template = messageTemplates[Math.floor(Math.random() * messageTemplates.length)];
+            el.innerText = template.replace("{name}", window.gameState.playerName);
+            el.classList.remove('fade-out');
+        }, 500);
+    }
+    setInterval(updateMessage, 5000); 
 
     function updateStore() {
         const upgradesDiv = document.getElementById('upgrades');
@@ -364,23 +510,41 @@
         const currentBps = window.gameState.baseBps * multiplier;
         const currentClick = window.gameState.baseClick * multiplier;
         window.gameState.beans += currentBps * delta;
+        
         document.getElementById('beans').textContent = formatNum(window.gameState.beans);
         const bpsBadge = document.getElementById('bps');
         const clickBadge = document.getElementById('click-power');
         bpsBadge.textContent = formatNum(currentBps);
         clickBadge.textContent = formatNum(currentClick);
+        
         if(window.gameState.isFever) {
             const shake = `scale(${1 + Math.sin(now/50)*0.1})`;
             bpsBadge.parentElement.style.color = '#d50000'; bpsBadge.style.transform = shake; clickBadge.style.transform = shake;
         } else {
             bpsBadge.parentElement.style.color = '#5d4037'; bpsBadge.style.transform = 'scale(1)'; clickBadge.style.transform = 'scale(1)';
         }
+        
         document.getElementById('manualTotal').textContent = formatNum(window.gameState.manualTotal);
+        
+        // 레벨 및 배경 업데이트
         const score = Math.max(window.gameState.baseBps, window.gameState.baseClick);
+        let levelIndex = 0;
         if (score > 0) {
-            const levelIndex = Math.min(Math.floor(Math.log10(score)), window.gameState.levels.length - 1);
+            levelIndex = Math.min(Math.floor(Math.log10(score)), window.gameState.levels.length - 1);
             if (levelIndex >= 0) document.getElementById('level').textContent = window.gameState.levels[levelIndex];
         }
+        updateBackground(levelIndex); // [신규] 배경 변경
+
+        // [신규] 황금 원두 생성 로직 (약 0.5% 확률/프레임)
+        if (!window.gameState.goldenBean.active && Math.random() < 0.005) {
+            window.gameState.goldenBean = {
+                active: true,
+                x: 50 + Math.random() * 300,
+                y: 50 + Math.random() * 100,
+                life: 3.0 // 3초간 지속
+            };
+        }
+
         const buttons = document.querySelectorAll('#upgrades button');
         window.items.forEach((item, i) => {
             const price = Math.floor(item.basePrice * Math.pow(1.15, item.owned));
@@ -427,7 +591,7 @@
         listDiv.innerHTML = html;
     }
 
-    // 탭 전환 (기본 정의, 나중에 모듈이 덮어쓸 수도 있음)
+    // 탭 전환
     window.switchRankTab = function(tabName) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
@@ -437,7 +601,6 @@
             document.getElementById('rank-list-national').innerHTML = "📡 서버 연결 시도중...<br>(연결 실패시 가상 랭킹이 표시됩니다)";
             if(window.fetchRealRanking) window.fetchRealRanking();
             else setTimeout(()=> {
-                 // 모듈 로드 실패시 가상 랭킹으로 대체
                  window.renderVirtualRanking('regional'); 
                  document.getElementById('rank-list-national').innerHTML = "⚠️ 서버 연결 불가<br>오프라인 모드로 표시합니다.";
             }, 2000);
@@ -456,7 +619,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, query, orderBy, limit, getCountFromServer, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
     const firebaseConfig = {
@@ -475,7 +638,7 @@
         const analytics = getAnalytics(app);
         console.log("🔥 Firebase 연결 성공!");
 
-        // 1. 저장 기능 업그레이드 (서버 저장 추가)
+        // 1. 저장 기능
         window.firebaseSave = async function() {
             const score = window.gameState.baseBps * (window.gameState.isFever ? 10 : 1);
             try {
@@ -488,7 +651,7 @@
             } catch (e) { console.error("🔥 저장 실패:", e); }
         };
 
-        // 2. 랭킹 불러오기 기능 추가
+        // 2. 전체 랭킹 불러오기
         window.fetchRealRanking = async function() {
             const listDiv = document.getElementById('rank-list-national');
             try {
@@ -512,6 +675,28 @@
                 listDiv.innerHTML = "❌ 랭킹을 불러오지 못했습니다.";
             }
         };
+
+        // 3. 내 순위 불러오기
+        window.fetchMyRank = async function() {
+            if (!window.gameState.playerId) return;
+            const myScore = window.gameState.baseBps * (window.gameState.isFever ? 10 : 1);
+            
+            try {
+                const coll = collection(db, "leaderboard");
+                const q = query(coll, where("score", ">", myScore));
+                const snapshot = await getCountFromServer(q);
+                const myRank = snapshot.data().count + 1; 
+
+                const rankDiv = document.getElementById('mini-ranking');
+                rankDiv.innerHTML = `🏆 현재 ${window.formatNum(myRank)} 등`;
+            } catch(e) { 
+                console.error("내 순위 로드 실패", e); 
+            }
+        };
+
+        window.fetchMyRank();
+        setInterval(window.fetchMyRank, 30000); 
+
     } catch (e) {
         console.log("⚠️ Firebase 연결 실패 (오프라인 모드로 동작합니다)", e);
     }
