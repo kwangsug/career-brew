@@ -9,27 +9,23 @@
         body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; background: #fff; color: #333; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; box-sizing: border-box; touch-action: manipulation; height: 100vh; display: flex; align-items: center; justify-content: center; }
         * { box-sizing: border-box; }
 
-        /* 메인 컨테이너 */
         #game-container { 
             width: 100%; 
             max-width: 450px; 
             height: 100%; 
             max-height: 100vh;
             background: #fff; 
-            padding: 15px; /* 패딩 축소 */
+            padding: 15px; 
             position: relative; 
             overflow: hidden; 
             display: flex;
             flex-direction: column;
         }
 
-        /* 폰트 및 여백 조정 */
         h1 { margin: 5px 0 10px 0; font-size: 22px; color: #3e2723; }
 
-        /* 캔버스 (크기 축소 및 여백 조정) */
         canvas { border-radius: 12px; background: #d2b48c; cursor: pointer; width: 100%; touch-action: none; display: block; margin-bottom: 5px; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
         
-        /* UI 영역 (더 컴팩트하게) */
         #ui { margin-bottom: 10px; padding: 12px; background: #faf3e0; border-radius: 15px; border: none; flex-shrink: 0; }
         
         .level-line { font-weight: bold; font-size: 15px; color: #3e2723; margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
@@ -45,26 +41,23 @@
             gap: 10px;
         }
 
-        /* 콩 숫자 (크기 유지하되 여백 축소) */
         .main-beans { font-size: 38px; color: #8b4513; margin: 8px 0 5px 0; font-weight: 900; word-break: keep-all; letter-spacing: -1px; line-height: 1.0; }
         
         .badge { padding: 3px 10px; border-radius: 20px; min-width: 70px; display: inline-block; text-align: center; border: 2px solid transparent; font-weight: 800; font-size: 13px; }
         .badge-click { background: #ffe0b2; color: #e65100; border-color: #ffb74d; }
         .badge-bps { background: #e0f2f1; color: #00695c; border-color: #4db6ac; }
 
-        /* 상점 헤더 */
         .store-header { text-align: left; margin: 5px 0 8px 0; font-size: 16px; font-weight: 800; color: #3e2723; border-bottom: 2px solid #eee; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 
-        /* 상점 리스트 (공간 확보) */
         #upgrades { 
             display: flex; 
             flex-direction: column; 
             gap: 8px; 
-            flex-grow: 1; /* 남은 공간 모두 차지 */
+            flex-grow: 1; 
             overflow-y: auto; 
             padding-right: 5px; 
             padding-bottom: 10px; 
-            min-height: 150px; /* 최소 높이 보장 (찌그러짐 방지) */
+            min-height: 150px; 
         }
         #upgrades::-webkit-scrollbar { width: 4px; }
         #upgrades::-webkit-scrollbar-thumb { background: #8d6e63; border-radius: 10px; }
@@ -79,9 +72,11 @@
         button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 0 #ccc; }
         button:active:not(:disabled) { transform: translateY(0); box-shadow: 0 0 0; }
         button:disabled { background: #f9f9f9; color: #bbb; cursor: not-allowed; opacity: 0.7; border-color: #f0f0f0; box-shadow: none; }
+        button.locked { background: #eee; border-color: #ddd; opacity: 0.8; }
         
         .btn-click { border-left: 6px solid #ff9800; }
         .btn-bps { border-left: 6px solid #009688; }
+        .btn-locked { border-left: 6px solid #9e9e9e; }
 
         .item-info { display: flex; flex-direction: column; gap: 3px; z-index: 2; flex: 1; }
         .item-name { font-weight: 900; font-size: 15px; color: #222; letter-spacing: -0.5px; line-height: 1.2; }
@@ -169,31 +164,57 @@
         levels: ['알바생', '주임', '대리', '과장', '차장', '부장', '이사', 'CEO', '커피 재벌', '원두 장관', '지구 대통령', '태양계 관리자', '은하계 지배자', '우주의 주인', '커피의 신']
     };
 
+    // [최종 밸런스 패치 (Rescaled)]
+    // 목표: 마지막 아이템 가격이 '해' 단위 내에 머물도록 조정
+    // 성장 계수 약 60배씩 증가
     const items = [
-        { name: '🧤 고무 장갑', type: 'click', basePrice: 30, val: 1, owned: 0 },
-        { name: '☕ 모카포트', type: 'bps', basePrice: 1000, val: 5, owned: 0 },
-        { name: '🔨 원두 망치', type: 'click', basePrice: 15000, val: 50, owned: 0 },
-        { name: '🔌 가정용 머신', type: 'bps', basePrice: 80000, val: 200, owned: 0 },
-        { name: '🎓 바리스타 1급', type: 'click', basePrice: 1500000, val: 2500, owned: 0 },
-        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 5000000, val: 6000, owned: 0 },
-        { name: '⚡ 전기 장갑', type: 'click', basePrice: 80000000, val: 50000, owned: 0 },
-        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 300000000, val: 150000, owned: 0 },
-        { name: '🦾 사이보그 팔', type: 'click', basePrice: 2000000000, val: 800000, owned: 0 },
-        { name: '🚢 원두 무역선', type: 'bps', basePrice: 15000000000, val: 4000000, owned: 0 },
-        { name: '🧬 돌연변이 손', type: 'click', basePrice: 800000000000, val: 30000000, owned: 0 },
-        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 5000000000000, val: 150000000, owned: 0 },
-        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 200000000000000, val: 2000000000, owned: 0 },
-        { name: '🤖 AI 군단', type: 'bps', basePrice: 1500000000000000, val: 8000000000, owned: 0 },
-        { name: '🌋 마그마 터치', type: 'click', basePrice: 4e16, val: 1e11, owned: 0 }, 
-        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 3e17, val: 5e11, owned: 0 },
-        { name: '☄️ 유성우 타격', type: 'click', basePrice: 2e18, val: 2e12, owned: 0 }, 
-        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 1e19, val: 8e12, owned: 0 }, 
-        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 5e20, val: 3e13, owned: 0 }, 
-        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 4e21, val: 2e14, owned: 0 },
-        { name: '🌀 워프 클릭', type: 'click', basePrice: 3e23, val: 1e15, owned: 0 }, 
-        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 2e24, val: 8e15, owned: 0 },
-        { name: '✨ 현실 조작', type: 'click', basePrice: 1e26, val: 5e16, owned: 0 }, 
-        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 8e27, val: 3e17, owned: 0 }
+        // [Tier 1] 시작
+        { name: '🧤 고무 장갑', type: 'click', basePrice: 50, val: 1, owned: 0 },
+        { name: '☕ 모카포트', type: 'bps', basePrice: 250, val: 1, owned: 0 }, // ROI 250s
+        
+        // [Tier 2] 도약
+        { name: '🔨 원두 망치', type: 'click', basePrice: 3000, val: 30, owned: 0 }, 
+        { name: '🔌 가정용 머신', type: 'bps', basePrice: 15000, val: 15, owned: 0 }, // ROI 1000s
+        
+        // [Tier 3] 전문
+        { name: '🎓 바리스타 1급', type: 'click', basePrice: 180000, val: 1800, owned: 0 },
+        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 900000, val: 900, owned: 0 },
+        
+        // [Tier 4] 기업
+        { name: '⚡ 전기 장갑', type: 'click', basePrice: 10800000, val: 100000, owned: 0 },
+        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 54000000, val: 50000, owned: 0 },
+        
+        // [Tier 5] 국가 (억 단위)
+        { name: '🦾 사이보그 팔', type: 'click', basePrice: 648000000, val: 6000000, owned: 0 }, 
+        { name: '🚢 원두 무역선', type: 'bps', basePrice: 3200000000, val: 3000000, owned: 0 },
+        
+        // [Tier 6] 글로벌 (백억/천억)
+        { name: '🧬 돌연변이 손', type: 'click', basePrice: 38800000000, val: 300000000, owned: 0 }, 
+        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 194400000000, val: 150000000, owned: 0 },
+        
+        // [Tier 7] 미래 (조 단위)
+        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 2300000000000, val: 20000000000, owned: 0 }, 
+        { name: '🤖 AI 군단', type: 'bps', basePrice: 11000000000000, val: 10000000000, owned: 0 },
+        
+        // [Tier 8] 지구 (백조)
+        { name: '🌋 마그마 터치', type: 'click', basePrice: 139000000000000, val: 1200000000000, owned: 0 }, 
+        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 699000000000000, val: 600000000000, owned: 0 },
+        
+        // [Tier 9] 우주 (경 단위 진입)
+        { name: '☄️ 유성우 타격', type: 'click', basePrice: 8398000000000000, val: 70000000000000, owned: 0 }, 
+        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 41000000000000000, val: 35000000000000, owned: 0 },
+        
+        // [Tier 10] 태양 (백경)
+        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 500000000000000000, val: 4000000000000000, owned: 0 }, 
+        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 2510000000000000000, val: 2000000000000000, owned: 0 },
+        
+        // [Tier 11] 은하 (천경/해)
+        { name: '🌀 워프 클릭', type: 'click', basePrice: 30230000000000000000, val: 200000000000000000, owned: 0 }, 
+        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 150000000000000000000, val: 100000000000000000, owned: 0 },
+        
+        // [Tier 12] 신 (십해) - 마지막은 좀 비싸게
+        { name: '✨ 현실 조작', type: 'click', basePrice: 1800000000000000000000, val: 15000000000000000000, owned: 0 }, 
+        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 9000000000000000000000, val: 7500000000000000000, owned: 0 }
     ];
 
     const competitors = [
@@ -203,12 +224,15 @@
         { name: "옆집 스타벅스", bps: 5000 }
     ];
 
+    // 단위 표시 함수 ('해'까지만 표시, 그 이상은 숫자만 커짐)
     function formatNum(num) {
         num = Math.floor(num); 
         if (num < 10000) return num.toLocaleString();
 
-        const units = ["", "만", "억", "조", "경", "해", "자", "양", "구", "간", "정", "재", "극"];
+        const units = ["", "만", "억", "조", "경", "해"];
         let unitIndex = Math.floor(Math.log10(num) / 4);
+        
+        // '해'보다 큰 단위가 나오면 그냥 '해'로 고정하고 앞 숫자를 키움
         if (unitIndex >= units.length) unitIndex = units.length - 1;
 
         const majorUnitVal = Math.pow(10000, unitIndex);
@@ -315,7 +339,6 @@
         }
         ctx.fillStyle = gameState.isFever ? '#ff5722' : '#6d4c41';
         ctx.beginPath();
-        // 캔버스 크기 변경에 따른 드럼 위치 및 크기 조정
         ctx.roundRect(50, 40, 300, 100, 20);
         ctx.fill();
         ctx.restore();
@@ -327,18 +350,15 @@
             if (p.life <= 0) particles.splice(i, 1);
         });
 
-        // 게이지 위치 조정
         ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(50, 145, 300, 10);
         ctx.fillStyle = gameState.isFever ? '#d50000' : '#fb8c00';
         ctx.fillRect(50, 145, 300 * (gameState.feverGauge/100), 10);
         
-        // 텍스트 위치 조정 (게이지 위)
         ctx.fillStyle = (gameState.baseBps > 1e8) ? '#fff' : 'rgba(255,255,255,0.8)'; 
         ctx.font = '900 16px Arial';
-        // 텍스트를 드럼 중앙에 배치
         ctx.textAlign = 'center';
         ctx.fillText(gameState.isFever ? "🔥 FEVER MODE (x10) 🔥" : "CLICK TO ROAST", 200, 95);
-        ctx.textAlign = 'start'; // 리셋
+        ctx.textAlign = 'start';
     }
 
     function handleInput(e) {
@@ -351,7 +371,6 @@
             const x = (p.clientX - rect.left) * (canvas.width / rect.width);
             const y = (p.clientY - rect.top) * (canvas.height / rect.height);
 
-            // 클릭 범위 전체로 확장
             if (x > 0 && x < 400 && y > 0 && y < 160) {
                 const multiplier = gameState.isFever ? 10 : 1;
                 const clickGain = gameState.baseClick * multiplier;
@@ -389,30 +408,56 @@
     function updateStore() {
         const upgradesDiv = document.getElementById('upgrades');
         upgradesDiv.innerHTML = '';
-        items.forEach((item) => {
+        items.forEach((item, index) => {
             const price = Math.floor(item.basePrice * Math.pow(1.15, item.owned));
+            
+            let isLocked = false;
+            if (index > 0 && items[index-1].owned === 0) {
+                isLocked = true;
+            }
+
             const btn = document.createElement('button');
             
             const isClickItem = item.type === 'click';
-            btn.className = isClickItem ? 'btn-click' : 'btn-bps';
-            btn.disabled = gameState.beans < price;
-            
+            let btnClass = isClickItem ? 'btn-click' : 'btn-bps';
+            if (isLocked) btnClass = 'btn-locked';
+
+            btn.className = btnClass;
+            btn.disabled = isLocked || (gameState.beans < price);
+            if (isLocked) btn.classList.add('locked');
+
             const effectColor = isClickItem ? '#e65100' : '#00695c';
             const typeIcon = isClickItem ? '👆' : '⚙️';
             const unitText = isClickItem ? '/클릭' : '/초';
 
+            let displayName = `${typeIcon} ${item.name}`;
+            let displayCost = `비용: ${formatNum(price)} 🫘`;
+            let displayOwned = `Lv. ${item.owned}`;
+            let displayEffect = `+${formatNum(item.val)}${unitText}`;
+            let displayEffectStyle = `color:${effectColor}`;
+
+            if (isLocked) {
+                displayName = "???";
+                displayCost = "??? 🫘";
+                displayOwned = "Lv.?";
+                displayEffect = "???";
+                displayEffectStyle = "color:#999";
+            }
+
             btn.innerHTML = `
                 <div class="item-info">
-                    <span class="item-name">${typeIcon} ${item.name}</span>
-                    <span class="item-cost">비용: ${formatNum(price)} 🫘</span>
+                    <span class="item-name">${displayName}</span>
+                    <span class="item-cost">${displayCost}</span>
                 </div>
                 <div class="item-right">
-                    <div class="item-lvl">Lv. ${item.owned}</div>
-                    <div class="item-effect" style="color:${effectColor}">+${formatNum(item.val)}${unitText}</div>
+                    <div class="item-lvl">${displayOwned}</div>
+                    <div class="item-effect" style="${displayEffectStyle}">${displayEffect}</div>
                 </div>
             `;
             
             btn.onclick = (e) => {
+                if (isLocked) return;
+
                 if (gameState.beans >= price) {
                     gameState.beans -= price;
                     item.owned++;
@@ -492,7 +537,15 @@
         const buttons = document.querySelectorAll('#upgrades button');
         items.forEach((item, i) => {
             const price = Math.floor(item.basePrice * Math.pow(1.15, item.owned));
-            if(buttons[i]) buttons[i].disabled = gameState.beans < price;
+            
+            let isLocked = false;
+            if (i > 0 && items[i-1].owned === 0) {
+                isLocked = true;
+            }
+            
+            if (buttons[i]) {
+                buttons[i].disabled = isLocked || (gameState.beans < price);
+            }
         });
 
         draw();
