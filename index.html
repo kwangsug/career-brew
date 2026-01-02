@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>커리어 브루: 지그재그 (온라인)</title>
     <style>
-        /* 기본 설정 (배경색은 JS로 제어하기 위해 body 배경 제거) */
+        /* [스타일 설정] */
         body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; text-align: center; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; box-sizing: border-box; touch-action: manipulation; height: 100vh; display: flex; align-items: center; justify-content: center; transition: background 1s, color 1s; }
         * { box-sizing: border-box; }
         
@@ -13,16 +13,29 @@
         
         h1 { margin: 5px 0 10px 0; font-size: 20px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 1s; }
         
-        /* 캔버스 배경 투명하게 (상위 배경 따라가도록) */
         canvas { border-radius: 12px; background: rgba(255,255,255,0.2); cursor: pointer; width: 100%; touch-action: none; display: block; margin-bottom: 5px; -webkit-tap-highlight-color: transparent; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); backdrop-filter: blur(5px); }
         
         #ui { margin-bottom: 10px; padding: 12px; background: rgba(255,255,255,0.5); border-radius: 15px; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; display: flex; flex-direction: column; align-items: center; backdrop-filter: blur(10px); }
         .level-line { font-weight: bold; font-size: 15px; margin-bottom: 5px; border-bottom: 1px dashed rgba(0,0,0,0.2); padding-bottom: 5px; width: 100%; }
         
-        #mini-ranking { font-size: 15px; color: #1565c0; font-weight: 900; background: rgba(227, 242, 253, 0.9); padding: 8px 20px; border-radius: 20px; margin-bottom: 5px; animation: fadeIn 0.5s; border: 2px solid #90caf9; width: fit-content; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        /* 랭킹 클릭 스타일 */
+        #mini-ranking { font-size: 15px; color: #1565c0; font-weight: 900; background: rgba(227, 242, 253, 0.9); padding: 8px 20px; border-radius: 20px; margin-bottom: 5px; animation: fadeIn 0.5s; border: 2px solid #90caf9; width: fit-content; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s; }
+        #mini-ranking:active { transform: scale(0.95); }
+        #mini-ranking:hover { transform: scale(1.05); }
+
+        /* [신규] 황금 원두 타이머 */
+        #golden-timer-badge {
+            font-size: 13px; font-weight: bold; color: #f57f17; 
+            background: #fff9c4; border: 1px solid #fbc02d;
+            padding: 4px 12px; border-radius: 15px; margin-bottom: 5px;
+            display: inline-block; width: fit-content;
+        }
+        .timer-ready { background: #ff6f00 !important; color: white !important; border-color: #ffca28 !important; animation: pulse 1s infinite; }
         
-        #msg-bar { font-size: 13px; font-weight: bold; margin-top: 8px; height: 18px; transition: opacity 0.5s; opacity: 1; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        /* 메시지 바 & 황금 원두 알림 */
+        #msg-bar { font-size: 13px; font-weight: bold; margin-top: 8px; height: 20px; transition: all 0.5s; opacity: 1; text-shadow: 1px 1px 0 rgba(255,255,255,0.5); width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
         .fade-out { opacity: 0 !important; }
+        .gold-alert { color: #ff8f00 !important; font-size: 16px !important; font-weight: 900 !important; transform: scale(1.1); text-shadow: 0 0 5px #ffd700 !important; }
 
         .main-beans { font-size: 38px; margin: 0 0 5px 0; font-weight: 900; word-break: keep-all; letter-spacing: -1px; line-height: 1.0; text-shadow: 2px 2px 0 rgba(255,255,255,0.5); }
         
@@ -70,6 +83,7 @@
         .rank-item.my-rank { background: #fff3e0; border-radius: 8px; font-weight: bold; color: #d84315; border: 1px solid #ffe0b2; }
         .rank-badge { width: 24px; display: inline-block; text-align: center; font-weight: bold; color: #8d6e63; margin-right: 5px; }
         .top-3 { color: #fbc02d; text-shadow: 1px 1px 0 #fff9c4; font-size: 16px; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
@@ -84,7 +98,9 @@
             직급: <span id="level" style="color:#d2691e; font-size:18px;">알바생</span>
         </div>
 
-        <div id="mini-ranking">🏆 순위 계산중...</div>
+        <div id="mini-ranking" onclick="window.showRanking()">🏆 순위 계산중...</div>
+
+        <div id="golden-timer-badge">⏳ 10:00</div>
 
         <div class="main-beans"><span id="beans">0</span> 🫘</div>
         <div style="font-size: 12px; font-weight: bold; margin-bottom:5px; opacity:0.7;">손으로 볶은 콩: <span id="manualTotal">0</span></div>
@@ -140,43 +156,75 @@
     const beanImg = new Image();
     beanImg.src = "https://cdn-icons-png.flaticon.com/512/751/751663.png";
 
+    // 10분 (밀리초)
+    const GOLDEN_INTERVAL = 10 * 60 * 1000;
+
     window.gameState = {
         beans: 0, baseBps: 0, baseClick: 1, manualTotal: 0,
         feverGauge: 0, isFever: false, lastTime: Date.now(), clickScale: 1.0,
         playerName: "익명", playerId: "",
         levels: ['알바생', '주임', '대리', '과장', '차장', '부장', '이사', 'CEO', '커피 재벌', '원두 장관', '지구 대통령', '태양계 관리자', '은하계 지배자', '우주의 주인', '커피의 신'],
         
-        // [신규] 황금 원두 상태
-        goldenBean: { active: false, x: 0, y: 0, life: 0, timer: 0 }
+        // [수정] 황금 원두 상태 및 다음 출현 시간
+        goldenBean: { active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0 },
+        nextGoldenTime: Date.now() + GOLDEN_INTERVAL 
     };
 
+    // [Tier 1 ~ 18] 9해 엔딩 & 초밀집 밸런스
     window.items = [
         { name: '☕ 모카포트', type: 'bps', basePrice: 50, val: 1, owned: 0 }, 
         { name: '🧤 고무 장갑', type: 'click', basePrice: 100, val: 2, owned: 0 }, 
-        { name: '🔌 가정용 머신', type: 'bps', basePrice: 2000, val: 20, owned: 0 }, 
-        { name: '🔨 원두 망치', type: 'click', basePrice: 4000, val: 40, owned: 0 }, 
-        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 50000, val: 500, owned: 0 }, 
-        { name: '🎓 바리스타 1급', type: 'click', basePrice: 100000, val: 1000, owned: 0 }, 
-        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 1500000, val: 15000, owned: 0 },
-        { name: '⚡ 전기 장갑', type: 'click', basePrice: 3000000, val: 30000, owned: 0 }, 
-        { name: '🚢 원두 무역선', type: 'bps', basePrice: 50000000, val: 500000, owned: 0 }, 
-        { name: '🦾 사이보그 팔', type: 'click', basePrice: 100000000, val: 1000000, owned: 0 }, 
-        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 2000000000, val: 20000000, owned: 0 }, 
-        { name: '🧬 돌연변이 손', type: 'click', basePrice: 4000000000, val: 40000000, owned: 0 }, 
-        { name: '🤖 AI 군단', type: 'bps', basePrice: 80000000000, val: 800000000, owned: 0 }, 
-        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 160000000000, val: 1600000000, owned: 0 }, 
-        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 3000000000000, val: 30000000000, owned: 0 }, 
-        { name: '🌋 마그마 터치', type: 'click', basePrice: 6000000000000, val: 60000000000, owned: 0 }, 
-        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 150000000000000, val: 1000000000000, owned: 0 }, 
-        { name: '☄️ 유성우 타격', type: 'click', basePrice: 300000000000000, val: 2000000000000, owned: 0 }, 
-        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 8000000000000000, val: 50000000000000, owned: 0 },
-        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 16000000000000000, val: 100000000000000, owned: 0 },
-        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 500000000000000000, val: 3000000000000000, owned: 0 }, 
-        { name: '🌀 워프 클릭', type: 'click', basePrice: 1000000000000000000, val: 6000000000000000, owned: 0 }, 
-        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 20000000000000000000, val: 100000000000000000, owned: 0 }, 
-        { name: '✨ 현실 조작', type: 'click', basePrice: 50000000000000000000, val: 250000000000000000, owned: 0 },
-        { name: '⏳ 시간의 지배자', type: 'bps', basePrice: 150000000000000000000, val: 800000000000000000, owned: 0 }, 
-        { name: '👑 커피의 신', type: 'click', basePrice: 450000000000000000000, val: 2000000000000000000, owned: 0 } 
+        
+        { name: '🔌 가정용 머신', type: 'bps', basePrice: 800, val: 20, owned: 0 }, 
+        { name: '🔨 원두 망치', type: 'click', basePrice: 1600, val: 40, owned: 0 }, 
+        
+        { name: '🏪 프랜차이즈', type: 'bps', basePrice: 15000, val: 500, owned: 0 }, 
+        { name: '🎓 바리스타 1급', type: 'click', basePrice: 30000, val: 1000, owned: 0 }, 
+        
+        { name: '🏭 스마트 팩토리', type: 'bps', basePrice: 200000, val: 15000, owned: 0 },
+        { name: '⚡ 전기 장갑', type: 'click', basePrice: 400000, val: 30000, owned: 0 }, 
+        
+        { name: '🚢 원두 무역선', type: 'bps', basePrice: 3000000, val: 500000, owned: 0 },
+        { name: '🦾 사이보그 팔', type: 'click', basePrice: 6000000, val: 1000000, owned: 0 }, 
+        
+        { name: '🏙️ 커피 제국 본사', type: 'bps', basePrice: 50000000, val: 20000000, owned: 0 },
+        { name: '🧬 돌연변이 손', type: 'click', basePrice: 100000000, val: 40000000, owned: 0 }, 
+        
+        { name: '🤖 AI 군단', type: 'bps', basePrice: 1500000000, val: 800000000, owned: 0 },
+        { name: '🧠 뇌파 로스팅', type: 'click', basePrice: 3000000000, val: 1600000000, owned: 0 }, 
+        
+        { name: '🌧️ 인공강우 위성', type: 'bps', basePrice: 60000000000, val: 30000000000, owned: 0 },
+        { name: '🌋 마그마 터치', type: 'click', basePrice: 120000000000, val: 60000000000, owned: 0 }, 
+        
+        { name: '🌕 달표면 건조장', type: 'bps', basePrice: 3000000000000, val: 1000000000000, owned: 0 },
+        { name: '☄️ 유성우 타격', type: 'click', basePrice: 6000000000000, val: 2000000000000, owned: 0 }, 
+        
+        { name: '☢️ 핵융합 보일러', type: 'bps', basePrice: 100000000000000, val: 50000000000000, owned: 0 },
+        { name: '☀️ 태양권 펀치', type: 'click', basePrice: 200000000000000, val: 100000000000000, owned: 0 }, 
+        
+        { name: '🕳️ 블랙홀 분쇄기', type: 'bps', basePrice: 5000000000000000, val: 3000000000000000, owned: 0 },
+        { name: '🌀 워프 클릭', type: 'click', basePrice: 10000000000000000, val: 6000000000000000, owned: 0 }, 
+        
+        { name: '💥 빅뱅 로스터', type: 'bps', basePrice: 250000000000000000, val: 200000000000000000, owned: 0 },
+        { name: '✨ 현실 조작', type: 'click', basePrice: 500000000000000000, val: 400000000000000000, owned: 0 },
+        
+        { name: '⏳ 타임머신 배달', type: 'bps', basePrice: 8000000000000000000, val: 5000000000000000000, owned: 0 },
+        { name: '🕰️ 시간 역행', type: 'click', basePrice: 16000000000000000000, val: 10000000000000000000, owned: 0 },
+        
+        { name: '🌌 멀티버스 체인점', type: 'bps', basePrice: 30000000000000000000, val: 50000000000000000000, owned: 0 },
+        { name: '👥 도플갱어 일꾼', type: 'click', basePrice: 60000000000000000000, val: 100000000000000000000, owned: 0 },
+        
+        { name: '💭 이데아 로스팅', type: 'bps', basePrice: 150000000000000000000, val: 300000000000000000000, owned: 0 },
+        { name: '♾️ 무한의 숟가락', type: 'click', basePrice: 300000000000000000000, val: 600000000000000000000, owned: 0 },
+        
+        { name: '💻 개발자 콘솔', type: 'bps', basePrice: 800000000000000000000, val: 1500000000000000000000, owned: 0 },
+        { name: '👑 게임의 신', type: 'click', basePrice: 1500000000000000000000, val: 3000000000000000000000, owned: 0 },
+        
+        { name: '🪐 행성 포식자', type: 'bps', basePrice: 3000000000000000000000, val: 8000000000000000000000, owned: 0 },
+        { name: '☄️ 코스믹 터치', type: 'click', basePrice: 5000000000000000000000, val: 16000000000000000000000, owned: 0 },
+        
+        { name: '⌛ 영겁의 시간', type: 'bps', basePrice: 7000000000000000000000, val: 30000000000000000000000, owned: 0 },
+        { name: '🌌 창조주의 손길', type: 'click', basePrice: 9000000000000000000000, val: 60000000000000000000000, owned: 0 } 
     ];
 
     window.formatNum = function(num) {
@@ -203,11 +251,12 @@
                 manualTotal: window.gameState.manualTotal,
                 lastTime: Date.now(),
                 playerName: window.gameState.playerName,
-                playerId: window.gameState.playerId
+                playerId: window.gameState.playerId,
+                nextGoldenTime: window.gameState.nextGoldenTime // [저장] 다음 출현 시간
             },
             items: window.items.map(item => ({ name: item.name, owned: item.owned }))
         };
-        localStorage.setItem('careerBrewSaveV17', JSON.stringify(saveData));
+        localStorage.setItem('careerBrewSaveV17_5', JSON.stringify(saveData));
         if (window.firebaseSave) window.firebaseSave();
         if (showToast) {
             const toast = document.getElementById('toast');
@@ -219,10 +268,12 @@
     function generateUUID() { return 'user-' + Math.random().toString(36).substr(2, 9); }
 
     window.loadGame = function() {
-        const savedString = localStorage.getItem('careerBrewSaveV17');
-        if (!savedString && localStorage.getItem('careerBrewSaveV16')) {
-             localStorage.setItem('careerBrewSaveV17', localStorage.getItem('careerBrewSaveV16'));
+        const savedString = localStorage.getItem('careerBrewSaveV17_5');
+        // 이전 버전 마이그레이션 (V17 -> V17_5)
+        if (!savedString && localStorage.getItem('careerBrewSaveV17')) {
+             localStorage.setItem('careerBrewSaveV17_5', localStorage.getItem('careerBrewSaveV17'));
         }
+
         if (savedString) {
             try {
                 const savedData = JSON.parse(savedString);
@@ -231,6 +282,8 @@
                     window.gameState.manualTotal = savedData.gameState.manualTotal || 0;
                     window.gameState.playerName = savedData.gameState.playerName || "익명";
                     window.gameState.playerId = savedData.gameState.playerId || generateUUID();
+                    // [로드] 타이머 복구. 없으면 10분 후로 설정
+                    window.gameState.nextGoldenTime = savedData.gameState.nextGoldenTime || (Date.now() + GOLDEN_INTERVAL);
                 }
                 if (savedData.items) {
                     savedData.items.forEach(savedItem => {
@@ -249,8 +302,11 @@
             let inputName = prompt("랭킹에 등록할 닉네임을 입력하세요!", randomName);
             if(inputName) window.gameState.playerName = inputName;
             else window.gameState.playerName = randomName;
+            
+            window.gameState.nextGoldenTime = Date.now() + GOLDEN_INTERVAL; // 첫 시작 10분 후
         }
         document.getElementById('player-name').textContent = window.gameState.playerName;
+        
         const titleText = `☕ ${window.gameState.playerName}의 커리어 브루: 지그재그`;
         document.title = titleText;
         document.getElementById('game-title').innerText = titleText;
@@ -267,12 +323,11 @@
 
     window.resetGame = function() {
         if (confirm("⚠️ 초기화하시겠습니까?")) {
-            localStorage.removeItem('careerBrewSaveV17');
+            localStorage.removeItem('careerBrewSaveV17_5');
             location.reload();
         }
     }
 
-    // [신규] 배경 업데이트 함수 (직급에 따라 색상 변경)
     function updateBackground(levelIndex) {
         const body = document.body;
         const container = document.getElementById('game-container');
@@ -281,17 +336,17 @@
         let bgColor = "#fff";
         let textColor = "#333";
 
-        if (levelIndex < 3) { // 알바생 ~ 대리
-            bgColor = "#fff8e1"; // 베이지
+        if (levelIndex < 3) { 
+            bgColor = "#fff8e1"; 
             textColor = "#3e2723";
-        } else if (levelIndex < 7) { // 과장 ~ CEO
-            bgColor = "#e0f2f1"; // 민트
+        } else if (levelIndex < 7) { 
+            bgColor = "#e0f2f1"; 
             textColor = "#004d40";
-        } else if (levelIndex < 11) { // 재벌 ~ 태양계
-            bgColor = "#fff3e0"; // 골드
+        } else if (levelIndex < 11) { 
+            bgColor = "#fff3e0"; 
             textColor = "#bf360c";
-        } else { // 우주 ~ 신
-            bgColor = "#1a237e"; // 우주색
+        } else { 
+            bgColor = "#1a237e"; 
             textColor = "#fff";
         }
 
@@ -309,7 +364,6 @@
             if (window.gameState.clickScale > 1.0) window.gameState.clickScale = 1.0;
         }
         
-        // 배경 그리기 (우주 단계면 별 추가)
         if (window.gameState.baseBps > 1e16 || window.gameState.baseClick > 1e16) {
             ctx.fillStyle = 'rgba(255,255,255,0.1)'; 
             for(let i=0; i<5; i++) { 
@@ -333,29 +387,60 @@
         }
         ctx.restore();
 
-        // [신규] 황금 원두 그리기
+        // [수정] 황금 원두 그리기 (디자인 리뉴얼: S자 음각이 있는 타원형)
         if (window.gameState.goldenBean.active) {
             const gb = window.gameState.goldenBean;
+            
+            // 움직임 (벽 튕기기)
+            gb.x += gb.vx;
+            gb.y += gb.vy;
+            if (gb.x < 30 || gb.x > 370) gb.vx *= -1;
+            if (gb.y < 30 || gb.y > 150) gb.vy *= -1;
+
             ctx.save();
             ctx.translate(gb.x, gb.y);
-            // 반짝이는 효과
             const scale = 1 + Math.sin(Date.now() / 100) * 0.1;
             ctx.scale(scale, scale);
-            ctx.fillStyle = '#ffd700'; // 골드
-            ctx.shadowColor = '#fff';
+            
+            // 그림자
+            ctx.shadowColor = '#ff8f00';
             ctx.shadowBlur = 20;
+
+            // 원두 몸체 (약간 기울어짐)
+            ctx.rotate(-Math.PI / 6); 
             ctx.beginPath();
-            ctx.arc(0, 0, 20, 0, Math.PI*2);
+            ctx.ellipse(0, 0, 28, 18, 0, 0, 2 * Math.PI);
+            
+            // 그라데이션 효과
+            const grd = ctx.createLinearGradient(-20, -20, 20, 20);
+            grd.addColorStop(0, "#fff59d"); // 밝은 금색
+            grd.addColorStop(0.5, "#fbc02d"); // 진한 금색
+            grd.addColorStop(1, "#f57f17"); // 어두운 금색
+            ctx.fillStyle = grd;
             ctx.fill();
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 20px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('★', 0, 0);
+            
+            // 원두 가운데 S자 홈 (음각)
+            ctx.beginPath();
+            ctx.moveTo(-18, 0);
+            ctx.bezierCurveTo(-10, -10, 10, 10, 18, 0);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#e65100'; // 진한 갈색/오렌지
+            ctx.stroke();
+
+            // 하이라이트
+            ctx.beginPath();
+            ctx.ellipse(-10, -8, 8, 4, -Math.PI/6, 0, 2*Math.PI);
+            ctx.fillStyle = "rgba(255,255,255,0.6)";
+            ctx.fill();
+            
             ctx.restore();
             
             gb.life -= 0.01;
-            if (gb.life <= 0) gb.active = false;
+            if (gb.life <= 0) {
+                gb.active = false;
+                document.getElementById('msg-bar').classList.remove('gold-alert');
+                window.gameState.nextGoldenTime = Date.now() + GOLDEN_INTERVAL; // 놓치면 10분 뒤
+            }
         }
 
         particles.forEach((p, i) => {
@@ -389,15 +474,17 @@
             const x = (p.clientX - rect.left) * (canvas.width / rect.width);
             const y = (p.clientY - rect.top) * (canvas.height / rect.height);
 
-            // [신규] 황금 원두 클릭 체크
+            // [수정] 황금 원두 클릭 판정 (반경 60)
             if (window.gameState.goldenBean.active) {
                 const gb = window.gameState.goldenBean;
                 const dist = Math.sqrt((x - gb.x)**2 + (y - gb.y)**2);
-                if (dist < 40) { // 클릭 성공
+                if (dist < 60) { 
                     window.gameState.goldenBean.active = false;
-                    startFever(); // 피버 모드 발동
+                    startFever(); 
                     floatingTexts.push({ x: x, y: y, val: "LUCKY!", life: 2.0, color: "#ffd700" });
-                    continue; // 일반 클릭은 패스
+                    document.getElementById('msg-bar').classList.remove('gold-alert');
+                    window.gameState.nextGoldenTime = Date.now() + GOLDEN_INTERVAL; // 획득 후 10분 뒤
+                    continue; 
                 }
             }
 
@@ -421,11 +508,10 @@
     function startFever() {
         window.gameState.isFever = true;
         window.gameState.feverGauge = 100;
-        // 기존 인터벌이 있으면 제거하고 새로 시작 (황금원두 중복 방지)
         if (window.feverInterval) clearInterval(window.feverInterval);
         
         window.feverInterval = setInterval(() => {
-            window.gameState.feverGauge -= 0.5; // 피버 지속시간 약간 증가
+            window.gameState.feverGauge -= 0.5; 
             if (window.gameState.feverGauge <= 0) { 
                 window.gameState.isFever = false; 
                 window.gameState.feverGauge = 0; 
@@ -453,6 +539,8 @@
     ];
     
     function updateMessage() {
+        if (window.gameState.goldenBean.active) return;
+
         const el = document.getElementById('msg-bar');
         el.classList.add('fade-out'); 
         setTimeout(() => {
@@ -467,7 +555,8 @@
         const upgradesDiv = document.getElementById('upgrades');
         upgradesDiv.innerHTML = '';
         window.items.forEach((item, index) => {
-            const price = Math.floor(item.basePrice * Math.pow(1.15, item.owned));
+            const multiplier = (item.type === 'bps') ? 1.12 : 1.30;
+            const price = Math.floor(item.basePrice * Math.pow(multiplier, item.owned));
             let isLocked = false;
             if (index > 0 && window.items[index-1].owned === 0) isLocked = true;
             const btn = document.createElement('button');
@@ -526,28 +615,49 @@
         
         document.getElementById('manualTotal').textContent = formatNum(window.gameState.manualTotal);
         
-        // 레벨 및 배경 업데이트
         const score = Math.max(window.gameState.baseBps, window.gameState.baseClick);
         let levelIndex = 0;
         if (score > 0) {
             levelIndex = Math.min(Math.floor(Math.log10(score)), window.gameState.levels.length - 1);
             if (levelIndex >= 0) document.getElementById('level').textContent = window.gameState.levels[levelIndex];
         }
-        updateBackground(levelIndex); // [신규] 배경 변경
+        updateBackground(levelIndex);
 
-        // [신규] 황금 원두 생성 로직 (약 0.5% 확률/프레임)
-        if (!window.gameState.goldenBean.active && Math.random() < 0.005) {
-            window.gameState.goldenBean = {
-                active: true,
-                x: 50 + Math.random() * 300,
-                y: 50 + Math.random() * 100,
-                life: 3.0 // 3초간 지속
-            };
+        // [수정] 황금 원두 타이머 및 생성 로직 (10분 고정)
+        if (!window.gameState.goldenBean.active) {
+            const timeLeft = window.gameState.nextGoldenTime - now;
+            const timerBadge = document.getElementById('golden-timer-badge');
+            
+            if (timeLeft <= 0) {
+                // 시간 도달 -> 생성
+                window.gameState.goldenBean = {
+                    active: true,
+                    x: 50 + Math.random() * 300,
+                    y: 50 + Math.random() * 100,
+                    vx: (Math.random() - 0.5) * 4, 
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 5.0 // 지속시간 5초
+                };
+                
+                // 알림
+                const msgBar = document.getElementById('msg-bar');
+                msgBar.innerText = "✨ 황금 원두 출현! ✨";
+                msgBar.classList.add('gold-alert');
+                timerBadge.innerText = "✨ CATCH! ✨";
+                timerBadge.classList.add('timer-ready');
+            } else {
+                // 카운트다운 표시
+                timerBadge.classList.remove('timer-ready');
+                const m = Math.floor(timeLeft / 60000);
+                const s = Math.floor((timeLeft % 60000) / 1000);
+                timerBadge.innerText = `⏳ ${m}:${s.toString().padStart(2, '0')}`;
+            }
         }
 
         const buttons = document.querySelectorAll('#upgrades button');
         window.items.forEach((item, i) => {
-            const price = Math.floor(item.basePrice * Math.pow(1.15, item.owned));
+            const multiplier = (item.type === 'bps') ? 1.12 : 1.30;
+            const price = Math.floor(item.basePrice * Math.pow(multiplier, item.owned));
             let isLocked = false;
             if (i > 0 && window.items[i-1].owned === 0) isLocked = true;
             if (buttons[i]) buttons[i].disabled = isLocked || (window.gameState.beans < price);
@@ -556,7 +666,6 @@
         requestAnimationFrame(gameLoop);
     }
     
-    // 게임 시작
     window.loadGame();
     updateStore();
     gameLoop();
@@ -638,7 +747,6 @@
         const analytics = getAnalytics(app);
         console.log("🔥 Firebase 연결 성공!");
 
-        // 1. 저장 기능
         window.firebaseSave = async function() {
             const score = window.gameState.baseBps * (window.gameState.isFever ? 10 : 1);
             try {
@@ -651,7 +759,6 @@
             } catch (e) { console.error("🔥 저장 실패:", e); }
         };
 
-        // 2. 전체 랭킹 불러오기
         window.fetchRealRanking = async function() {
             const listDiv = document.getElementById('rank-list-national');
             try {
@@ -676,7 +783,6 @@
             }
         };
 
-        // 3. 내 순위 불러오기
         window.fetchMyRank = async function() {
             if (!window.gameState.playerId) return;
             const myScore = window.gameState.baseBps * (window.gameState.isFever ? 10 : 1);
